@@ -41,6 +41,15 @@ from nnunet_mednext.training.loss_functions.dice_loss import DC_and_CE_loss
 from nnunet_mednext.training.network_training.network_trainer import NetworkTrainer
 from nnunet_mednext.utilities.nd_softmax import softmax_helper
 from nnunet_mednext.utilities.tensor_utilities import sum_tensor
+from time import time
+
+try:
+    import wandb
+except ImportError:
+    import subprocess
+    import sys
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "wandb"])
+    import wandb
 
 matplotlib.use("agg")
 
@@ -131,6 +140,22 @@ class nnUNetTrainer(NetworkTrainer):
 
         self.conv_per_stage = None
         self.regions_class_order = None
+
+        self.last_val_dice_per_class = []
+        self.best_val_dice = -1
+        self.best_epoch = -1
+        self.best_metrics = {}
+
+
+        wandb.login(key="51ffe1022d9cb8e7e7a504cbf9a800d732b5de57")
+        run = wandb.init(
+            project="MedNeXt_ADULT_GLIO_TEST",
+            name = f"MedNeXt_{int(time())}",
+            config={                      
+                "learning_rate": self.initial_lr
+            },
+        )
+
 
     def update_fold(self, fold):
         """
@@ -315,7 +340,24 @@ class nnUNetTrainer(NetworkTrainer):
 
     def run_training(self):
         self.save_debug_information()
-        super(nnUNetTrainer, self).run_training()
+        super().run_training()  # This runs the full training loop
+
+        if hasattr(self, "epoch_table"):
+            wandb.log({"epoch_metrics_table": self.epoch_table})
+
+        # Log best epoch metrics as a W&B Table
+        if hasattr(self, "best_metrics"):
+            best_table = wandb.Table(columns=list(self.best_metrics.keys()))
+            best_table.add_data(*self.best_metrics.values())
+            wandb.log({"best_epoch_metrics": best_table})
+
+        # Ensure all logs are uploaded
+        wandb.finish()
+
+
+    # def run_training(self):
+    #     self.save_debug_information()
+    #     super(nnUNetTrainer, self).run_training()
 
     def load_plans_file(self):
         """
@@ -719,11 +761,47 @@ class nnUNetTrainer(NetworkTrainer):
         self.print_to_log_file("Average global foreground Dice:", [np.round(i, 4) for i in global_dc_per_class])
         self.print_to_log_file("(interpret this as an estimate for the Dice of the different classes. This is not "
                                "exact.)")
-
+        self.last_val_dice_per_class = global_dc_per_class 
+        
         self.online_eval_foreground_dc = []
         self.online_eval_tp = []
         self.online_eval_fp = []
         self.online_eval_fn = []
+
+    def on_epoch_end(self):
+        super().on_epoch_end()  # Keep base nnUNet behavior
+
+        epoch = self.epoch
+        train_loss = self.all_tr_losses[-1] if self.all_tr_losses else None
+        val_loss = self.all_val_losses[-1] if self.all_val_losses else None
+        avg_dice = self.all_val_eval_metrics[-1] if self.all_val_eval_metrics else None
+
+        metrics = {
+            "epoch": epoch,
+            "train_loss": train_loss,
+            "val_loss": val_loss,
+            "avg_dice": avg_dice,
+        }
+
+        for i, dice in enumerate(self.last_val_dice_per_class):
+            metrics[f"dice_class_{i+1}"] = dice
+
+        wandb.log(metrics)
+
+        if not hasattr(self, "epoch_table"):
+            self.epoch_table = wandb.Table(
+            columns=list(metrics.keys())
+        )
+
+        row = [metrics.get(col, None) for col in self.epoch_table.columns]
+        self.epoch_table.add_data(*row)
+
+
+        if avg_dice is not None and avg_dice > self.best_val_dice:
+            self.best_val_dice = avg_dice
+            self.best_epoch = epoch
+            self.best_metrics = metrics
+
 
     def save_checkpoint(self, fname, save_optimizer=True):
         super(nnUNetTrainer, self).save_checkpoint(fname, save_optimizer)

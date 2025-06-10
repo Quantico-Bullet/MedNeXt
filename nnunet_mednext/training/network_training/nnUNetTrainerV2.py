@@ -42,15 +42,19 @@ class nnUNetTrainerV2(nnUNetTrainer):
     """
 
     def __init__(self, plans_file, fold, output_folder=None, dataset_directory=None, batch_dice=True, stage=None,
-                 unpack_data=True, deterministic=True, fp16=False, sample_by_frequency=False, distribute_batch_size = True):
+                 unpack_data=True, deterministic=True, fp16=False, sample_by_frequency=False):
         super().__init__(plans_file, fold, output_folder, dataset_directory, batch_dice, stage, unpack_data,
                          deterministic, fp16, sample_by_frequency)
-        self.max_num_epochs = 20
+        self.max_num_epochs = 70
         self.initial_lr = 1e-2
         self.deep_supervision_scales = None
         self.ds_loss_weights = None
 
         self.pin_memory = True
+
+        
+        
+
 
     def initialize(self, training=True, force_load_plans=False):
         """
@@ -433,10 +437,12 @@ class nnUNetTrainerV2(nnUNetTrainer):
         we also need to make sure deep supervision in the network is enabled for training, thus the wrapper
         :return:
         """
+
         self.maybe_update_lr(self.epoch)  # if we dont overwrite epoch then self.epoch+1 is used which is not what we
         # want at the start of the training
         ds = self.network.do_ds
         self.network.do_ds = True
         ret = super().run_training()
         self.network.do_ds = ds
+
         return ret

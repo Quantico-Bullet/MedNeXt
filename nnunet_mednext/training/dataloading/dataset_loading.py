@@ -47,7 +47,7 @@ def convert_to_npy(args):
     if not isfile(npz_file[:-3] + "npy"):
         a = np.load(npz_file)[key]
         np.save(npz_file[:-3] + "npy", a)
-        
+
         os.remove(npz_file[:-3] + "npz")
 
 def save_as_npz(args):

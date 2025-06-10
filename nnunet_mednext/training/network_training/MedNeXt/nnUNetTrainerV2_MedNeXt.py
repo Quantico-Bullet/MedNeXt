@@ -2,7 +2,7 @@ import torch
 import os
 import torch.nn as nn
 from nnunet_mednext.network_architecture.mednextv1.MedNextV1 import MedNeXt as MedNeXt_Orig
-from nnunet_mednext.training.network_training.nnUNetTrainerV2_DP import nnUNetTrainerV2_DP
+from nnunet_mednext.training.network_training.nnUNetTrainerV2 import nnUNetTrainerV2
 from nnunet_mednext.network_architecture.neural_network import SegmentationNetwork
 from nnunet_mednext.utilities.nd_softmax import softmax_helper
 
@@ -19,7 +19,7 @@ class MedNeXt(MedNeXt_Orig, SegmentationNetwork):
         # self.do_ds = False        Already added this in the main class
 
 
-class nnUNetTrainerV2_Optim_and_LR(nnUNetTrainerV2_DP):
+class nnUNetTrainerV2_Optim_and_LR(nnUNetTrainerV2):
 
     def __init__(self, *args, **kwargs): 
         super().__init__(*args, **kwargs)
@@ -53,7 +53,8 @@ class nnUNetTrainerV2_MedNeXt_S_kernel3(nnUNetTrainerV2_Optim_and_LR):
             deep_supervision=True,             # Can be used to test deep supervision
             do_res=True,                      # Can be used to individually test residual connection
             do_res_up_down = True,
-            block_counts = [2,2,2,2,2,2,2,2,2]
+            block_counts = [2,2,2,2,2,2,2,2,2],
+            checkpoint_style = 'outside_block'
         )
 
         if torch.cuda.is_available():
