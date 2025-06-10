@@ -50,7 +50,6 @@ def convert_to_npy(args):
         
         os.remove(npz_file[:-3] + "npz")
 
-
 def save_as_npz(args):
     if not isinstance(args, tuple):
         key = "data"

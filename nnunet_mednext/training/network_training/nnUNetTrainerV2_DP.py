@@ -26,7 +26,6 @@ from nnunet_mednext.training.dataloading.dataset_loading import unpack_dataset
 from nnunet_mednext.training.network_training.nnUNetTrainer import nnUNetTrainer
 from nnunet_mednext.utilities.nd_softmax import softmax_helper
 from torch import nn
-from torch.cuda.amp import autocast
 from torch.nn.parallel.data_parallel import DataParallel
 
 
@@ -182,8 +181,8 @@ class nnUNetTrainerV2_DP(nnUNetTrainerV2):
         self.optimizer.zero_grad()
 
         if self.fp16:
-            with autocast():
-                ret = self.network(data, target, return_hard_tp_fp_fn=run_online_evaluation)
+            with torch.amp.autocast("cuda"):
+                ret = self.network(data, target) # REMOVED: return_hard_tp_fp_fn=run_online_evaluation 
                 if run_online_evaluation:
                     ces, tps, fps, fns, tp_hard, fp_hard, fn_hard = ret
                     self.run_online_evaluation(tp_hard, fp_hard, fn_hard)
