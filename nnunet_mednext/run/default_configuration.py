@@ -56,9 +56,8 @@ def get_default_configuration(network, task, network_trainer, plans_identifier=d
     else:
         stage = possible_stages[-1]
 
-    trainer_class = nnUNetTrainerV2_DDP
-                    #recursive_find_python_class([join(*search_in)], network_trainer,
-                    #                            current_module=base_module)
+    trainer_class = recursive_find_python_class([join(*search_in)], network_trainer,
+                                                current_module=base_module)
 
     output_folder_name = join(network_training_output_dir, network, task, network_trainer + "__" + plans_identifier)
 
