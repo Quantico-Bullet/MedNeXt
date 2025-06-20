@@ -115,7 +115,9 @@ class nnUNetTrainer(NetworkTrainer):
         self.basic_generator_patch_size = self.data_aug_params = self.transpose_forward = self.transpose_backward = None
 
         self.batch_dice = batch_dice
-        self.loss = DC_and_CE_loss({'batch_dice': self.batch_dice, 'smooth': 1e-5, 'do_bg': False}, {})
+        #TODO This is what we are editing
+        self.loss = DC_and_CE_loss({'batch_dice': self.batch_dice, 'smooth': 1e-5, 'do_bg': False}, {}, 
+                                   weight_dice=1.5)
 
         self.online_eval_foreground_dc = []
         self.online_eval_tp = []
@@ -149,7 +151,7 @@ class nnUNetTrainer(NetworkTrainer):
 
         wandb.login(key="51ffe1022d9cb8e7e7a504cbf9a800d732b5de57")
         run = wandb.init(
-            project="MedNeXt_SSA_TRANSFER_55-100",
+            project="MedNeXt_INSANEDA_INFERENCE",
             name = f"MedNeXt_{int(time())}",
             config={                      
                 "learning_rate": self.initial_lr
