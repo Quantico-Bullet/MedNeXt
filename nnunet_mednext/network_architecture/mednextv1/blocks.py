@@ -59,8 +59,8 @@ class MedNeXtBlock(nn.Module):
             padding = 0
         )
         
-        # GeLU activations
-        self.act = nn.GELU()
+        # Custom activations
+        self.act = ModAct()
         
         # Third convolution (Compression) layer with Conv3D 1x1x1
         self.conv3 = conv(
@@ -211,6 +211,13 @@ class OutBlock(nn.Module):
     def forward(self, x, dummy_tensor=None): 
         return self.conv_out(x)
 
+class ModAct(nn.Module):
+    def __init__(self, alpha = 0.2):
+        super().__init__()
+        self.alpha = alpha
+
+    def forward(self, x: torch.Tensor):
+        return F.relu(x) * F.tanh(x * self.alpha)
 
 class LayerNorm(nn.Module):
     """ LayerNorm that supports two data formats: channels_last (default) or channels_first. 
