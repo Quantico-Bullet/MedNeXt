@@ -217,7 +217,8 @@ class ModAct(nn.Module):
         self.alpha = alpha
 
     def forward(self, x: torch.Tensor):
-        return F.relu(x) * F.tanh(x * self.alpha)
+        slope = 0.04 * torch.sin(2 * x)
+        return F.leaky_relu(x, slope)
 
 class LayerNorm(nn.Module):
     """ LayerNorm that supports two data formats: channels_last (default) or channels_first. 
