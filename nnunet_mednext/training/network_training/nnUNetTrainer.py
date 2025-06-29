@@ -117,7 +117,7 @@ class nnUNetTrainer(NetworkTrainer):
         self.batch_dice = batch_dice
         #TODO This is what we are editing
         self.loss = DC_and_CE_loss({'batch_dice': self.batch_dice, 'smooth': 1e-5, 'do_bg': False}, {}, 
-                                   weight_dice=1.5)
+                                   )
 
         self.online_eval_foreground_dc = []
         self.online_eval_tp = []
