@@ -380,6 +380,8 @@ class BoundaryDOU_Loss(nn.Module):
         p_alpha = 1 - self.alpha
         b_dou = p_alpha * tp / (fp + fn + p_alpha * tp)
 
+        b_dou = b_dou.mean()
+
         return -b_dou
     
 class CE_and_BDOU_loss(nn.Module):
@@ -430,6 +432,7 @@ class CE_and_BDOU_loss(nn.Module):
             result = self.weight_ce * ce_loss + self.weight_bdou * bdou_loss
         else:
             raise NotImplementedError("nah son") # reserved for other stuff (later)
+        
         return result
 
 class DC_and_CE_loss_with_class_wts(nn.Module):
