@@ -359,6 +359,82 @@ class DC_and_CE_loss(nn.Module):
             raise NotImplementedError("nah son") # reserved for other stuff (later)
         return result
 
+class BoundaryDOU_Loss(nn.Module):
+    def __init__(self, alpha = 0.25):
+        """
+        Implementation of the Boundary intersection over union
+
+        :param soft_dice_kwargs:
+        """
+        super(BoundaryDOU_Loss, self).__init__()
+        self.alpha = alpha
+
+    def forward(self, x, y):
+        """
+        """
+        shp_x = x.shape
+
+        if self.batch_dice:
+            axes = [0] + list(range(2, len(shp_x)))
+        else:
+            axes = list(range(2, len(shp_x)))
+
+        tp, fp, fn, _ = get_tp_fp_fn_tn(x, y, axes, None, False)
+
+        p_alpha = 1 - self.alpha
+        b_dou = p_alpha * tp / (fp + fn + p_alpha * tp)
+
+        return -b_dou
+    
+class CE_and_BDOU_loss(nn.Module):
+    def __init__(self, soft_dice_kwargs, ce_kwargs, aggregate="sum", square_dice=False, weight_ce=1, weight_bdou=1, 
+                 ignore_label=None):
+        """
+        CAREFUL. Weights for CE and Dice do not need to sum to one. You can set whatever you want.
+        :param ce_kwargs:
+        :param aggregate:
+        :param weight_ce:
+        :param weight_bdou:
+        """
+        super(CE_and_BDOU_loss, self).__init__()
+        if ignore_label is not None:
+            assert not square_dice, 'not implemented'
+            ce_kwargs['reduction'] = 'none'
+        self.weight_bdou = weight_bdou
+        self.weight_ce = weight_ce
+        self.aggregate = aggregate
+        self.ce = RobustCrossEntropyLoss(**ce_kwargs)
+        self.bdou = BoundaryDOU_Loss()
+
+        self.ignore_label = ignore_label
+
+    def forward(self, net_output, target):
+        """
+        target must be b, c, x, y(, z) with c=1
+        :param net_output:
+        :param target:
+        :return:
+        """
+        if self.ignore_label is not None:
+            assert target.shape[1] == 1, 'not implemented for one hot encoding'
+            mask = target != self.ignore_label
+            target[~mask] = 0
+            mask = mask.float()
+        else:
+            mask = None
+
+        bdou_loss = self.bdou(net_output, target) if self.weight_bdou != 0 else 0
+
+        ce_loss = self.ce(net_output, target[:, 0].long()) if self.weight_ce != 0 else 0
+        if self.ignore_label is not None:
+            ce_loss *= mask[:, 0]
+            ce_loss = ce_loss.sum() / mask.sum()
+
+        if self.aggregate == "sum":
+            result = self.weight_ce * ce_loss + self.weight_bdou * bdou_loss
+        else:
+            raise NotImplementedError("nah son") # reserved for other stuff (later)
+        return result
 
 class DC_and_CE_loss_with_class_wts(nn.Module):
     def __init__(self, soft_dice_kwargs, ce_kwargs, aggregate="sum", square_dice=False, weight_ce=1, weight_dice=1,
