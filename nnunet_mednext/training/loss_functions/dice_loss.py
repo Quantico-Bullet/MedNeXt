@@ -387,7 +387,7 @@ class BoundaryDOU_Loss(nn.Module):
         return -b_dou
     
 class CE_and_BDOU_loss(nn.Module):
-    def __init__(self, soft_dice_kwargs, ce_kwargs, aggregate="sum", square_dice=False, weight_ce=1, weight_bdou=1, 
+    def __init__(self, ce_kwargs, aggregate="sum", square_dice=False, weight_ce=1, weight_bdou=1, 
                  ignore_label=None):
         """
         CAREFUL. Weights for CE and Dice do not need to sum to one. You can set whatever you want.
