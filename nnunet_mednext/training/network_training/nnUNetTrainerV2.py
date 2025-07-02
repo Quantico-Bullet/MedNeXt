@@ -22,6 +22,7 @@ from nnunet_mednext.training.data_augmentation.data_augmentation_moreDA import g
 from nnunet_mednext.training.loss_functions.deep_supervision import MultipleOutputLoss2
 from nnunet_mednext.utilities.to_torch import maybe_to_torch, to_cuda
 from nnunet_mednext.network_architecture.generic_UNet import Generic_UNet
+from nnunet_mednext.network_architecture.generic_modular_residual_UNet import ResidualUNet, get_default_network_config
 from nnunet_mednext.network_architecture.initialization import InitWeights_He
 from nnunet_mednext.network_architecture.neural_network import SegmentationNetwork
 from nnunet_mednext.training.data_augmentation.default_data_augmentation import default_2D_augmentation_params, \
@@ -45,8 +46,8 @@ class nnUNetTrainerV2(nnUNetTrainer):
                  unpack_data=True, deterministic=True, fp16=False, sample_by_frequency=False):
         super().__init__(plans_file, fold, output_folder, dataset_directory, batch_dice, stage, unpack_data,
                          deterministic, fp16, sample_by_frequency)
-        self.max_num_epochs = 10
-        self.initial_lr = 1e-2
+        self.max_num_epochs = 100
+        self.initial_lr = 7e-3
         self.deep_supervision_scales = None
         self.ds_loss_weights = None
 
@@ -147,16 +148,30 @@ class nnUNetTrainerV2(nnUNetTrainer):
             dropout_op = nn.Dropout2d
             norm_op = nn.InstanceNorm2d
 
-        norm_op_kwargs = {'eps': 1e-5, 'affine': True}
-        dropout_op_kwargs = {'p': 0, 'inplace': True}
-        net_nonlin = nn.LeakyReLU
-        net_nonlin_kwargs = {'negative_slope': 1e-2, 'inplace': True}
-        self.network = Generic_UNet(self.num_input_channels, self.base_num_features, self.num_classes,
-                                    len(self.net_num_pool_op_kernel_sizes),
-                                    self.conv_per_stage, 2, conv_op, norm_op, norm_op_kwargs, dropout_op,
-                                    dropout_op_kwargs,
-                                    net_nonlin, net_nonlin_kwargs, True, False, lambda x: x, InitWeights_He(1e-2),
-                                    self.net_num_pool_op_kernel_sizes, self.net_conv_kernel_sizes, False, True, True)
+        pool_op_kernel_sizes = [[1, 1, 1],
+                                [1, 2, 2],
+                                [1, 2, 2],
+                                [2, 2, 2],
+                                [2, 2, 2],
+                                [1, 2, 2],
+                                [1, 2, 2]]
+
+        conv_op_kernel_sizes = [[1, 3, 3],
+                                [1, 3, 3],
+                                [3, 3, 3],
+                                [3, 3, 3],
+                                [3, 3, 3],
+                                [3, 3, 3],
+                                [3, 3, 3]]
+
+        net_prop = get_default_network_config(3, norm_type = "in")
+        self.network = ResidualUNet(self.num_input_channels, self.base_num_features, self.net_num_pool_op_kernel_sizes,
+                                    self.net_conv_kernel_sizes, net_prop, self.num_classes,
+                                    ResidualUNet.default_blocks_per_stage_encoder, ResidualUNet.default_blocks_per_stage_decoder,
+                                    2, initializer = InitWeights_He(1e-2))
+        
+        self.print_to_log_file(f"\n Using the RESIDUAL UNET: {self.network} \n")
+
         if torch.cuda.is_available():
             self.network.cuda()
         self.network.inference_apply_nonlin = softmax_helper
@@ -433,10 +448,12 @@ class nnUNetTrainerV2(nnUNetTrainer):
         we also need to make sure deep supervision in the network is enabled for training, thus the wrapper
         :return:
         """
+
         self.maybe_update_lr(self.epoch)  # if we dont overwrite epoch then self.epoch+1 is used which is not what we
         # want at the start of the training
         ds = self.network.do_ds
         self.network.do_ds = True
         ret = super().run_training()
         self.network.do_ds = ds
+
         return ret

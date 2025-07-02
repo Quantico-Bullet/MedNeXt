@@ -25,6 +25,7 @@ from nnunet_mednext.configuration import default_num_threads
 from nnunet_mednext.paths import preprocessing_output_dir
 from batchgenerators.utilities.file_and_folder_operations import *
 
+import os
 
 def get_case_identifiers(folder):
     case_identifiers = [i[:-4] for i in os.listdir(folder) if i.endswith("npz") and (i.find("segFromPrevStage") == -1)]
@@ -47,6 +48,7 @@ def convert_to_npy(args):
         a = np.load(npz_file)[key]
         np.save(npz_file[:-3] + "npy", a)
 
+        os.remove(npz_file[:-3] + "npz")
 
 def save_as_npz(args):
     if not isinstance(args, tuple):

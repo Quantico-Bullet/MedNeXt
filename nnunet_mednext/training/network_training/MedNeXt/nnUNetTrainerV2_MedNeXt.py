@@ -33,10 +33,10 @@ class nnUNetTrainerV2_Optim_and_LR(nnUNetTrainerV2):
     
     def initialize_optimizer_and_scheduler(self):
         assert self.network is not None, "self.initialize_network must be called first"
-        self.optimizer = torch.optim.AdamW(self.network.parameters(), 
-                                            self.initial_lr, 
-                                            weight_decay=self.weight_decay,
-                                            eps=1e-4        # 1e-8 might cause nans in fp16
+        self.optimizer = torch.optim.SGD(self.network.parameters(),
+                                           self.initial_lr, 
+                                           weight_decay=self.weight_decay,
+                                           eps = 1e-4   # 1e-8 might cause nans in fp16
                                         )
         self.lr_scheduler = None
 
@@ -53,7 +53,8 @@ class nnUNetTrainerV2_MedNeXt_S_kernel3(nnUNetTrainerV2_Optim_and_LR):
             deep_supervision=True,             # Can be used to test deep supervision
             do_res=True,                      # Can be used to individually test residual connection
             do_res_up_down = True,
-            block_counts = [2,2,2,2,2,2,2,2,2]
+            block_counts = [2,2,2,2,2,2,2,2,2],
+            checkpoint_style = 'outside_block'
         )
 
         if torch.cuda.is_available():

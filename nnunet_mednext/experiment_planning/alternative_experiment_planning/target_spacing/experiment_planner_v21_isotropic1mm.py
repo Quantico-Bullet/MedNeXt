@@ -61,6 +61,7 @@ class ExperimentPlanner3D_v21_customTargetSpacing_1x1x1(ExperimentPlanner3D_v21)
         plans = super(ExperimentPlanner3D_v21_customTargetSpacing_1x1x1, self).get_properties_for_stage(
             current_spacing, original_spacing, original_shape, num_cases, num_modalities, num_classes
         )
+        plans['batch_size'] = 1
         plans["patch_size"] = [128, 128, 128]
         return plans
 

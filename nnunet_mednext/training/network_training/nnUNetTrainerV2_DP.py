@@ -182,7 +182,7 @@ class nnUNetTrainerV2_DP(nnUNetTrainerV2):
         self.optimizer.zero_grad()
 
         if self.fp16:
-            with autocast():
+            with torch.amp.autocast("cuda"):
                 ret = self.network(data, target, return_hard_tp_fp_fn=run_online_evaluation)
                 if run_online_evaluation:
                     ces, tps, fps, fns, tp_hard, fp_hard, fn_hard = ret
