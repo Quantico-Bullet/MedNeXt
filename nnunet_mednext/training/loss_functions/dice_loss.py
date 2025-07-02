@@ -373,11 +373,7 @@ class BoundaryDOU_Loss(nn.Module):
         """
         """
         shp_x = x.shape
-
-        if self.batch_dice:
-            axes = [0] + list(range(2, len(shp_x)))
-        else:
-            axes = list(range(2, len(shp_x)))
+        axes = list(range(2, len(shp_x)))
 
         tp, fp, fn, _ = get_tp_fp_fn_tn(x, y, axes, None, False)
 
