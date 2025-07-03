@@ -360,7 +360,7 @@ class DC_and_CE_loss(nn.Module):
         return result
 
 class BoundaryDOU_Loss(nn.Module):
-    def __init__(self, alpha = 0.25):
+    def __init__(self, alpha = 0.75):
         """
         Implementation of the Boundary intersection over union
 

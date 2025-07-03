@@ -115,8 +115,9 @@ class nnUNetTrainer(NetworkTrainer):
         self.basic_generator_patch_size = self.data_aug_params = self.transpose_forward = self.transpose_backward = None
 
         self.batch_dice = batch_dice
-        self.loss = CE_and_BDOU_loss({})
-        #self.loss = DC_and_CE_loss({'batch_dice': self.batch_dice, 'smooth': 1e-5, 'do_bg': False}, {})
+        #self.loss = CE_and_BDOU_loss({})
+        self.loss = DC_and_CE_loss({'batch_dice': self.batch_dice, 'smooth': 1e-5, 'do_bg': False}, {},
+                                   weight_dice = 0.8, square_dice = True)
 
         self.online_eval_foreground_dc = []
         self.online_eval_tp = []
