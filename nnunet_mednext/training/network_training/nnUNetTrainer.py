@@ -782,7 +782,7 @@ class nnUNetTrainer(NetworkTrainer):
             "epoch": epoch,
             "train_loss": train_loss,
             "val_loss": val_loss,
-            "avg_dice": avg_dice,
+            "avg_dice": avg_dice
         }
 
         for i, dice in enumerate(self.last_val_dice_per_class):
