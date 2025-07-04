@@ -45,7 +45,7 @@ class BoundaryDoULoss(nn.Module):
 
     def forward(self, inputs, target):
         inputs = torch.softmax(inputs, dim=1)
-        target = target[:,:,0] # Target is already one-hot encoded
+        target = self._one_hot_encoder(target[:,0]) # Target is already one-hot encoded
 
         assert inputs.size() == target.size(), 'predict {} & target {} shape do not match'.format(inputs.size(), target.size())
 
