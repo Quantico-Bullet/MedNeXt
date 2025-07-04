@@ -37,7 +37,8 @@ from nnunet_mednext.postprocessing.connected_components import determine_postpro
 from nnunet_mednext.training.data_augmentation.default_data_augmentation import default_3D_augmentation_params, \
     default_2D_augmentation_params, get_default_augmentation, get_patch_size
 from nnunet_mednext.training.dataloading.dataset_loading import load_dataset, DataLoader3D, DataLoader2D, unpack_dataset
-from nnunet_mednext.training.loss_functions.dice_loss import DC_and_CE_loss, CE_and_BDOU_loss, BoundaryDOU_Loss
+from nnunet_mednext.training.loss_functions.dice_loss import DC_and_CE_loss, CE_and_BDOU_loss
+from nnunet_mednext.training.loss_functions.boundary_dou_loss import BoundaryDoULoss
 from nnunet_mednext.training.network_training.network_trainer import NetworkTrainer
 from nnunet_mednext.utilities.nd_softmax import softmax_helper
 from nnunet_mednext.utilities.tensor_utilities import sum_tensor
@@ -115,7 +116,7 @@ class nnUNetTrainer(NetworkTrainer):
         self.basic_generator_patch_size = self.data_aug_params = self.transpose_forward = self.transpose_backward = None
 
         self.batch_dice = batch_dice
-        self.loss = BoundaryDOU_Loss(0.01)
+        self.loss = BoundaryDoULoss(4)
         #self.loss = DC_and_CE_loss({'batch_dice': self.batch_dice, 'smooth': 1e-5, 'do_bg': False}, {},
         #                           weight_dice = 0.8, square_dice = True)
 

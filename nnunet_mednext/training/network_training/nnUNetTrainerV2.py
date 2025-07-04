@@ -258,7 +258,7 @@ class nnUNetTrainerV2(nnUNetTrainer):
         self.optimizer.zero_grad()
 
         if self.fp16:
-            with autocast():
+            with torch.autocast('cuda'):
                 output = self.network(data)
                 del data
                 l = self.loss(output, target)
