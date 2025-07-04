@@ -15,14 +15,18 @@ class BoundaryDoULoss(nn.Module):
         return output_tensor.float()
 
     def _adaptive_size(self, score, target):
-        kernel = torch.Tensor([[0,1,0], [1,1,1], [0,1,0]])
-        padding_out = torch.zeros((target.shape[0], target.shape[-2]+2, target.shape[-1]+2))
-        padding_out[:, 1:-1, 1:-1] = target
-        h, w = 3, 3
+        kernel = torch.Tensor([[[1,2,1], [2,4,2], [1,2,1]],[[2,4,2], [4,8,4], [2,4,2]], [[1,2,1], [2,4,2], [1,2,1]]]) / 8.0
+        padding_out = torch.zeros((target.shape[0], target.shape[-3]+2, target.shape[-2]+2, target.shape[-1]+2))
+        padding_out[:, 1:-1, 1:-1, 1:-1] = target
+        h, w, d = 3, 3, 3
 
-        Y = torch.zeros((padding_out.shape[0], padding_out.shape[1] - h + 1, padding_out.shape[2] - w + 1)).cuda()
+        Y = torch.zeros((padding_out.shape[0], 
+                         padding_out.shape[1] - h + 1, 
+                         padding_out.shape[2] - w + 1, 
+                         padding_out.shape[2] - d + 1
+                         )).cuda()
         for i in range(Y.shape[0]):
-            Y[i, :, :] = torch.conv2d(target[i].unsqueeze(0).unsqueeze(0), kernel.unsqueeze(0).unsqueeze(0).cuda(), padding=1)
+            Y[i, :, :, :] = torch.conv3d(target[i].unsqueeze(0).unsqueeze(0), kernel.unsqueeze(0).unsqueeze(0).cuda(), padding=1)
         Y = Y * target
         Y[Y == 5] = 0
         C = torch.count_nonzero(Y)
@@ -41,7 +45,7 @@ class BoundaryDoULoss(nn.Module):
 
     def forward(self, inputs, target):
         inputs = torch.softmax(inputs, dim=1)
-        target = self._one_hot_encoder(target[:, 0].long())
+        target = target[:,:,0] # Target is already one-hot encoded
 
         assert inputs.size() == target.size(), 'predict {} & target {} shape do not match'.format(inputs.size(), target.size())
 
