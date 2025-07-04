@@ -61,7 +61,7 @@ class BoundaryDoU_CE_Loss(nn.Module):
         super(BoundaryDoU_CE_Loss, self).__init__()
 
         self.b_dou = BoundaryDoULoss(n_classes)
-        self.ce = RobustCrossEntropyLoss({})
+        self.ce = RobustCrossEntropyLoss()
     
     def forward(self, net_output, target):
         b_dou_loss = self.b_dou(net_output, target)
