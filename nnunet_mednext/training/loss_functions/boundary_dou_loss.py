@@ -1,6 +1,8 @@
 import torch
 from torch import nn
 
+from nnunet_mednext.training.loss_functions.crossentropy import RobustCrossEntropyLoss
+
 class BoundaryDoULoss(nn.Module):
     def __init__(self, n_classes):
         super(BoundaryDoULoss, self).__init__()
@@ -53,3 +55,16 @@ class BoundaryDoULoss(nn.Module):
         for i in range(0, self.n_classes):
             loss += self._adaptive_size(inputs[:, i], target[:, i])
         return loss / self.n_classes
+    
+class BoundaryDoU_CE_Loss(nn.Module):
+    def __init__(self, n_classes):
+        super(BoundaryDoU_CE_Loss, self).__init__()
+
+        self.b_dou = BoundaryDoULoss(n_classes)
+        self.ce = RobustCrossEntropyLoss({})
+    
+    def forward(self, net_output, target):
+        b_dou_loss = self.b_dou(net_output, target)
+        ce_loss = self.ce(net_output, target[:, 0].long())
+
+        return ce_loss + b_dou_loss
