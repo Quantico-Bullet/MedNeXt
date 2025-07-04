@@ -52,4 +52,4 @@ class BoundaryDoULoss(nn.Module):
         loss = 0.0
         for i in range(0, self.n_classes):
             loss += self._adaptive_size(inputs[:, i], target[:, i])
-        return loss / self.n_classes
+        return - loss / self.n_classes
