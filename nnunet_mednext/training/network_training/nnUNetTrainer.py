@@ -116,7 +116,8 @@ class nnUNetTrainer(NetworkTrainer):
         self.basic_generator_patch_size = self.data_aug_params = self.transpose_forward = self.transpose_backward = None
 
         self.batch_dice = batch_dice
-        self.loss = BoundaryDoU_Dice_Loss(4, {'batch_dice': self.batch_dice, 'smooth': 1e-5, 'do_bg': False})
+        self.loss = BoundaryDoU_CE_Loss(4)
+        #self.loss = BoundaryDoU_Dice_Loss(4, {'batch_dice': self.batch_dice, 'smooth': 1e-5, 'do_bg': False})
         #self.loss = DC_and_CE_loss({'batch_dice': self.batch_dice, 'smooth': 1e-5, 'do_bg': False}, {},
         #                           weight_dice = 0.8, square_dice = True)
 
@@ -152,8 +153,8 @@ class nnUNetTrainer(NetworkTrainer):
 
         wandb.login(key="51ffe1022d9cb8e7e7a504cbf9a800d732b5de57")
         run = wandb.init(
-            project="MedNeXt_ADG_FOLDS",
-            name = f"MedNeXt_FOLD_0_PRED",
+            project="MedNeXt_BDOU",
+            name = f"MedNeXt_TEST_10_BDOU_CE",
             config={                     
                 "learning_rate": self.initial_lr
             },
