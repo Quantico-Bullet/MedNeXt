@@ -23,7 +23,7 @@ class nnUNetTrainerV2_Optim_and_LR(nnUNetTrainerV2):
 
     def __init__(self, *args, **kwargs): 
         super().__init__(*args, **kwargs)
-        self.initial_lr = 1e-4
+        self.initial_lr = 1e-3
 
     def process_plans(self, plans):
         super().process_plans(plans)
@@ -33,10 +33,10 @@ class nnUNetTrainerV2_Optim_and_LR(nnUNetTrainerV2):
     
     def initialize_optimizer_and_scheduler(self):
         assert self.network is not None, "self.initialize_network must be called first"
-        self.optimizer = torch.optim.SGD(self.network.parameters(),
+        self.optimizer = torch.optim.AdamW(self.network.parameters(),
                                            self.initial_lr, 
-                                           weight_decay=self.weight_decay
-                                           #eps = 1e-4   # 1e-8 might cause nans in fp16
+                                           weight_decay=self.weight_decay,
+                                           eps = 1e-4   # 1e-8 might cause nans in fp16
                                         )
         self.lr_scheduler = None
 
