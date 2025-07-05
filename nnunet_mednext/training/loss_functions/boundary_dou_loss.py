@@ -2,6 +2,7 @@ import torch
 from torch import nn
 
 from nnunet_mednext.training.loss_functions.crossentropy import RobustCrossEntropyLoss
+from nnunet_mednext.training.loss_functions.dice_loss import SoftDiceLoss
 
 class BoundaryDoULoss(nn.Module):
     def __init__(self, n_classes):
@@ -68,3 +69,16 @@ class BoundaryDoU_CE_Loss(nn.Module):
         ce_loss = self.ce(net_output, target[:, 0].long())
 
         return ce_loss + b_dou_loss
+    
+class BoundaryDoU_Dice_Loss(nn.Module):
+    def __init__(self, n_classes, soft_dice_kwargs):
+        super(BoundaryDoU_Dice_Loss, self).__init__()
+
+        self.b_dou = BoundaryDoULoss(n_classes)
+        self.dice = SoftDiceLoss(**soft_dice_kwargs)
+    
+    def forward(self, net_output, target):
+        b_dou_loss = self.b_dou(net_output, target)
+        dice_loss = self.dice(net_output, target)
+
+        return dice_loss + b_dou_loss
