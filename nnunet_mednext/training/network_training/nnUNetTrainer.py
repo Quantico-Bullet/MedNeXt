@@ -118,8 +118,8 @@ class nnUNetTrainer(NetworkTrainer):
         self.batch_dice = batch_dice
         #self.loss = BoundaryDoU_CE_Loss(4)
         #self.loss = BoundaryDoU_Dice_Loss(4, {'batch_dice': self.batch_dice, 'smooth': 1e-5, 'do_bg': False})
-        #self.loss = DC_and_CE_loss({'batch_dice': self.batch_dice, 'smooth': 1e-5, 'do_bg': False}, {})
-        self.loss = DoU_Dice_CE_Loss(4, {'batch_dice': self.batch_dice, 'smooth': 1e-5, 'do_bg': False})
+        self.loss = DC_and_CE_loss({'batch_dice': self.batch_dice, 'smooth': 1e-5, 'do_bg': False}, {})
+        #self.loss = DoU_Dice_CE_Loss(4, {'batch_dice': self.batch_dice, 'smooth': 1e-5, 'do_bg': False})
 
         self.online_eval_foreground_dc = []
         self.online_eval_tp = []
@@ -154,7 +154,7 @@ class nnUNetTrainer(NetworkTrainer):
         wandb.login(key="51ffe1022d9cb8e7e7a504cbf9a800d732b5de57")
         run = wandb.init(
             project="MedNeXt_BDOU",
-            name = f"MedNeXt_TEST_13_F0_BDOU_DICE_CE",
+            name = f"MedNeXt_TEST_14_F0_BDOU_DICE_CE",
             config={                     
                 "learning_rate": self.initial_lr
             },
