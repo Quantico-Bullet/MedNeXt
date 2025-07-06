@@ -97,7 +97,7 @@ def merge(folders, output_folder, threads, override=True, postprocessing_file=No
 
 def main():
     import argparse
-    parser = argparse.ArgumentParser(description="This script will merge predictions (that were prdicted with the "
+    parser = argparse.ArgumentParser(description="This script will merge predictions (that were predicted with the "
                                                  "-npz option!). You need to specify a postprocessing file so that "
                                                  "we know here what postprocessing must be applied. Failing to do so "
                                                  "will disable postprocessing")
