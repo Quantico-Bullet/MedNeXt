@@ -89,7 +89,12 @@ class MedNeXtBlock(nn.Module):
         
         x1 = x
         x1 = self.conv1(x1)
-        x1 = self.act(self.conv2(self.norm(x1)))
+        x1 = self.norm(x1)
+
+        if self.do_dropout:
+            x1 = self.dropout(x1)
+
+        x1 = self.act(self.conv2(x1))
         if self.grn:
             # gamma, beta: learnable affine transform parameters
             # X: input of shape (N,C,H,W,D)
@@ -103,11 +108,8 @@ class MedNeXtBlock(nn.Module):
         if self.do_res:
             x1 = x + x1
 
-        if self.do_dropout:
-            x1 = self.dropout(x1)
-
         return x1
-
+    
 
 class MedNeXtDownBlock(MedNeXtBlock):
 
