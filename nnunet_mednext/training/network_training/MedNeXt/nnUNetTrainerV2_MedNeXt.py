@@ -23,7 +23,7 @@ class nnUNetTrainerV2_Optim_and_LR(nnUNetTrainerV2):
 
     def __init__(self, *args, **kwargs): 
         super().__init__(*args, **kwargs)
-        self.initial_lr = 5e-4
+        self.initial_lr = 1e-3
 
     def process_plans(self, plans):
         super().process_plans(plans)
