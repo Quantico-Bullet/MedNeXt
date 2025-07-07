@@ -15,13 +15,14 @@ class MedNeXtBlock(nn.Module):
                 n_groups:int or None = None,
                 dim = '3d',
                 grn = False,
-                do_dropout = True
+                do_dropout = False
                 ):
 
         super().__init__()
 
         self.do_res = do_res
         self.do_dropout = do_dropout
+        self.in_channels = in_channels
 
         assert dim in ['2d', '3d']
         self.dim = dim
