@@ -297,6 +297,8 @@ class nnUNetTrainerV2(nnUNetTrainer):
         use a random 80:20 data split.
         :return:
         """
+        num_splits = 2
+
         if self.fold == "all":
             # if fold==all then we use all images for training and validation
             tr_keys = val_keys = list(self.dataset.keys())
@@ -305,10 +307,10 @@ class nnUNetTrainerV2(nnUNetTrainer):
 
             # if the split file does not exist we need to create it
             if not isfile(splits_file):
-                self.print_to_log_file("Creating new 5-fold cross-validation split...")
+                self.print_to_log_file(f"Creating new {num_splits}-fold cross-validation split...")
                 splits = []
                 all_keys_sorted = np.sort(list(self.dataset.keys()))
-                kfold = KFold(n_splits=5, shuffle=True, random_state=12345)
+                kfold = KFold(n_splits=num_splits, shuffle=True, random_state=12345)
                 for i, (train_idx, test_idx) in enumerate(kfold.split(all_keys_sorted)):
                     train_keys = np.array(all_keys_sorted)[train_idx]
                     test_keys = np.array(all_keys_sorted)[test_idx]
