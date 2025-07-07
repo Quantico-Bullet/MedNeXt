@@ -14,12 +14,14 @@ class MedNeXtBlock(nn.Module):
                 norm_type:str = 'group',
                 n_groups:int or None = None,
                 dim = '3d',
-                grn = False
+                grn = False,
+                do_dropout = True,
                 ):
 
         super().__init__()
 
         self.do_res = do_res
+        self.do_dropout = do_dropout
 
         assert dim in ['2d', '3d']
         self.dim = dim
@@ -97,7 +99,12 @@ class MedNeXtBlock(nn.Module):
             x1 = self.grn_gamma * (x1 * nx) + self.grn_beta + x1
         x1 = self.conv3(x1)
         if self.do_res:
-            x1 = x + x1  
+            x1 = x + x1
+
+        if self.do_dropout:
+            if self.dim == "3d": x1 = nn.Dropout3d(x1, 0.2)
+            elif self.dim == "2d": x1 = x1 = nn.Dropout2d(x1, 0.2)
+          
         return x1
 
 
