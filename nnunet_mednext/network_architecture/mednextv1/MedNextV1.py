@@ -41,8 +41,12 @@ class MedNeXt(nn.Module):
 
         if dim == '2d':
             conv = nn.Conv2d
+            conv_trans = nn.ConvTranspose2d
+            self.conv_pad = lambda x: torch.nn.functional.pad(x, (1,0,1,0))
         elif dim == '3d':
             conv = nn.Conv3d
+            conv_trans = nn.ConvTranspose3d
+            self.conv_pad = lambda x: torch.nn.functional.pad(x, (1,0,1,0,1,0))
             
         self.stem = conv(in_channels, n_channels, kernel_size=1)
         if type(exp_r) == int:
@@ -72,7 +76,7 @@ class MedNeXt(nn.Module):
             dim=dim
         )
 
-        self.dense_res_0 = conv(n_channels, 2*n_channels, kernel_size = 1, stride = 2)
+        self.enc_dense_res_0 = conv(n_channels, 2*n_channels, kernel_size = 1, stride = 2)
     
         self.enc_block_1 = nn.Sequential(*[
             MedNeXtBlock(
@@ -99,7 +103,7 @@ class MedNeXt(nn.Module):
             grn=grn
         )
 
-        self.dense_res_1 = conv(2*n_channels, 4*n_channels, kernel_size = 1, stride = 2)
+        self.enc_dense_res_1 = conv(2*n_channels, 4*n_channels, kernel_size = 1, stride = 2)
 
         self.enc_block_2 = nn.Sequential(*[
             MedNeXtBlock(
@@ -126,7 +130,7 @@ class MedNeXt(nn.Module):
             grn=grn
         )
 
-        self.dense_res_2 = conv(4*n_channels, 8*n_channels, kernel_size = 1, stride = 2)
+        self.enc_dense_res_2 = conv(4*n_channels, 8*n_channels, kernel_size = 1, stride = 2)
         
         self.enc_block_3 = nn.Sequential(*[
             MedNeXtBlock(
@@ -153,7 +157,7 @@ class MedNeXt(nn.Module):
             grn=grn
         )
 
-        self.dense_res_3 = conv(8*n_channels, 16*n_channels, kernel_size = 1, stride = 2)
+        self.enc_dense_res_3 = conv(8*n_channels, 16*n_channels, kernel_size = 1, stride = 2)
 
         self.bottleneck = nn.Sequential(*[
             MedNeXtBlock(
@@ -180,6 +184,8 @@ class MedNeXt(nn.Module):
             grn=grn
         )
 
+        self.dec_dense_res_0 = conv_trans(16*n_channels, 8*n_channels, kernel_size = 1, stride = 2)
+
         self.dec_block_3 = nn.Sequential(*[
             MedNeXtBlock(
                 in_channels=n_channels*8,
@@ -204,6 +210,8 @@ class MedNeXt(nn.Module):
             dim=dim,
             grn=grn
         )
+
+        self.dec_dense_res_1 = conv_trans(8*n_channels, 4*n_channels, kernel_size = 1, stride = 2)
 
         self.dec_block_2 = nn.Sequential(*[
             MedNeXtBlock(
@@ -230,6 +238,8 @@ class MedNeXt(nn.Module):
             grn=grn
         )
 
+        self.dec_dense_res_2 = conv_trans(4*n_channels, 2*n_channels, kernel_size = 1, stride = 2)
+
         self.dec_block_1 = nn.Sequential(*[
             MedNeXtBlock(
                 in_channels=n_channels*2,
@@ -254,6 +264,8 @@ class MedNeXt(nn.Module):
             dim=dim,
             grn=grn
         )
+
+        self.dec_dense_res_3 = conv_trans(2*n_channels, n_channels, kernel_size = 1, stride = 2)
 
         self.dec_block_0 = nn.Sequential(*[
             MedNeXtBlock(
@@ -299,51 +311,55 @@ class MedNeXt(nn.Module):
         
         x = self.stem(x)
 
-        dense_0 = self.dense_res_0(x)
-        dense_1 = self.dense_res_1(dense_0)
-        dense_2 = self.dense_res_2(dense_1)
-        dense_3 = self.dense_res_3(dense_2)
+        enc_dense_0 = self.enc_dense_res_0(x)
+        enc_dense_1 = self.enc_dense_res_1(enc_dense_0)
+        enc_dense_2 = self.enc_dense_res_2(enc_dense_1)
+        enc_dense_3 = self.enc_dense_res_3(enc_dense_2)
+        dec_dense_0 = self.conv_pad(self.dec_dense_res_0(enc_dense_3))
+        dec_dense_1 = self.conv_pad(self.dec_dense_res_1(dec_dense_0))
+        dec_dense_2 = self.conv_pad(self.dec_dense_res_2(dec_dense_1))
+        dec_dense_3 = self.conv_pad(self.dec_dense_res_3(dec_dense_2))
 
         if self.outside_block_checkpointing:
             x_res_0 = self.iterative_checkpoint(self.enc_block_0, x)
             x = checkpoint.checkpoint(self.down_0, x_res_0, self.dummy_tensor)
-            x += dense_0
+            x += enc_dense_0
             x_res_1 = self.iterative_checkpoint(self.enc_block_1, x)
             x = checkpoint.checkpoint(self.down_1, x_res_1, self.dummy_tensor)
-            x += dense_1
+            x += enc_dense_1
             x_res_2 = self.iterative_checkpoint(self.enc_block_2, x)
             x = checkpoint.checkpoint(self.down_2, x_res_2, self.dummy_tensor)
-            x += dense_2
+            x += enc_dense_2
             x_res_3 = self.iterative_checkpoint(self.enc_block_3, x)
             x = checkpoint.checkpoint(self.down_3, x_res_3, self.dummy_tensor)
-            x += dense_3
+            x += enc_dense_3
             x = self.iterative_checkpoint(self.bottleneck, x)
             if self.do_ds:
                 x_ds_4 = checkpoint.checkpoint(self.out_4, x, self.dummy_tensor)
 
             x_up_3 = checkpoint.checkpoint(self.up_3, x, self.dummy_tensor)
-            dec_x = x_res_3 + x_up_3 
+            dec_x = x_res_3 + x_up_3 + dec_dense_0
             x = self.iterative_checkpoint(self.dec_block_3, dec_x)
             if self.do_ds:
                 x_ds_3 = checkpoint.checkpoint(self.out_3, x, self.dummy_tensor)
             del x_res_3, x_up_3
 
             x_up_2 = checkpoint.checkpoint(self.up_2, x, self.dummy_tensor)
-            dec_x = x_res_2 + x_up_2 
+            dec_x = x_res_2 + x_up_2 + dec_dense_1
             x = self.iterative_checkpoint(self.dec_block_2, dec_x)
             if self.do_ds:
                 x_ds_2 = checkpoint.checkpoint(self.out_2, x, self.dummy_tensor)
             del x_res_2, x_up_2
 
             x_up_1 = checkpoint.checkpoint(self.up_1, x, self.dummy_tensor)
-            dec_x = x_res_1 + x_up_1 
+            dec_x = x_res_1 + x_up_1 + dec_dense_2
             x = self.iterative_checkpoint(self.dec_block_1, dec_x)
             if self.do_ds:
                 x_ds_1 = checkpoint.checkpoint(self.out_1, x, self.dummy_tensor)
             del x_res_1, x_up_1
 
             x_up_0 = checkpoint.checkpoint(self.up_0, x, self.dummy_tensor)
-            dec_x = x_res_0 + x_up_0 
+            dec_x = x_res_0 + x_up_0 + dec_dense_3
             x = self.iterative_checkpoint(self.dec_block_0, dec_x)
             del x_res_0, x_up_0, dec_x
 
@@ -352,23 +368,23 @@ class MedNeXt(nn.Module):
         else:
             x_res_0 = self.enc_block_0(x)
             x = self.down_0(x_res_0)
-            x += dense_0
+            x += enc_dense_0
             x_res_1 = self.enc_block_1(x)
             x = self.down_1(x_res_1)
-            x += dense_1
+            x += enc_dense_1
             x_res_2 = self.enc_block_2(x)
             x = self.down_2(x_res_2)
-            x += dense_2
+            x += enc_dense_2
             x_res_3 = self.enc_block_3(x)
             x = self.down_3(x_res_3)
-            x += dense_3
+            x += enc_dense_3
 
             x = self.bottleneck(x)
             if self.do_ds:
                 x_ds_4 = self.out_4(x)
 
             x_up_3 = self.up_3(x)
-            dec_x = x_res_3 + x_up_3 
+            dec_x = x_res_3 + x_up_3 + dec_dense_0
             x = self.dec_block_3(dec_x)
 
             if self.do_ds:
@@ -376,21 +392,21 @@ class MedNeXt(nn.Module):
             del x_res_3, x_up_3
 
             x_up_2 = self.up_2(x)
-            dec_x = x_res_2 + x_up_2 
+            dec_x = x_res_2 + x_up_2 + dec_dense_1
             x = self.dec_block_2(dec_x)
             if self.do_ds:
                 x_ds_2 = self.out_2(x)
             del x_res_2, x_up_2
 
             x_up_1 = self.up_1(x)
-            dec_x = x_res_1 + x_up_1 
+            dec_x = x_res_1 + x_up_1 + dec_dense_2
             x = self.dec_block_1(dec_x)
             if self.do_ds:
                 x_ds_1 = self.out_1(x)
             del x_res_1, x_up_1
 
             x_up_0 = self.up_0(x)
-            dec_x = x_res_0 + x_up_0 
+            dec_x = x_res_0 + x_up_0 + dec_dense_3
             x = self.dec_block_0(dec_x)
             del x_res_0, x_up_0, dec_x
 
