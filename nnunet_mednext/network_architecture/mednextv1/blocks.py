@@ -103,7 +103,7 @@ class MedNeXtBlock(nn.Module):
 
         if self.do_dropout:
             if self.dim == "3d": x1 = nn.Dropout3d(x1, 0.2)
-            elif self.dim == "2d": x1 = x1 = nn.Dropout2d(x1, 0.2)
+            elif self.dim == "2d": x1 = nn.Dropout2d(x1, 0.2)
           
         return x1
 
