@@ -311,10 +311,10 @@ class MedNeXt(nn.Module):
         
         x = self.stem(x)
 
-        enc_dense_0 = self.enc_dense_res_0(x)
-        enc_dense_1 = self.enc_dense_res_1(enc_dense_0)
-        enc_dense_2 = self.enc_dense_res_2(enc_dense_1)
-        enc_dense_3 = self.enc_dense_res_3(enc_dense_2)
+        #enc_dense_0 = self.enc_dense_res_0(x)
+        #enc_dense_1 = self.enc_dense_res_1(enc_dense_0)
+        #enc_dense_2 = self.enc_dense_res_2(enc_dense_1)
+        #enc_dense_3 = self.enc_dense_res_3(enc_dense_2)
         #dec_dense_0 = self.conv_pad(self.dec_dense_res_0(enc_dense_3))
         #dec_dense_1 = self.conv_pad(self.dec_dense_res_1(dec_dense_0))
         #dec_dense_2 = self.conv_pad(self.dec_dense_res_2(dec_dense_1))
