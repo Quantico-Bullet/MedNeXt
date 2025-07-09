@@ -153,8 +153,8 @@ class nnUNetTrainer(NetworkTrainer):
 
         wandb.login(key="51ffe1022d9cb8e7e7a504cbf9a800d732b5de57")
         run = wandb.init(
-            project="MedNeXt_BDOU",
-            name = f"MedNeXt_Test_6",
+            project="MedNeXt_DENSE",
+            name = f"MedNeXt_Test_7",
             config={                     
                 "learning_rate": self.initial_lr
             },
@@ -791,6 +791,7 @@ class nnUNetTrainer(NetworkTrainer):
             metrics[f"dice_class_{i+1}"] = dice
 
         wandb.log(metrics)
+        self.best_val_dice
 
         if not hasattr(self, "epoch_table"):
             self.epoch_table = wandb.Table(
