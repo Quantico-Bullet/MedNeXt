@@ -153,8 +153,8 @@ class nnUNetTrainer(NetworkTrainer):
 
         wandb.login(key="51ffe1022d9cb8e7e7a504cbf9a800d732b5de57")
         run = wandb.init(
-            project="MedNeXt_DENSE",
-            name = f"MedNeXt_Test_7",
+            project="MedNeXt_SK3_Baseline",
+            name = f"MedNeXt_ADG_0-50",
             config={                     
                 "learning_rate": self.initial_lr
             },
