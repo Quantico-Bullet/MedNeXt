@@ -298,7 +298,7 @@ class nnUNetTrainerV2(nnUNetTrainer):
         use a random 80:20 data split.
         :return:
         """
-        num_splits = 2
+        num_splits = 5
 
         if self.fold == "all":
             # if fold==all then we use all images for training and validation
