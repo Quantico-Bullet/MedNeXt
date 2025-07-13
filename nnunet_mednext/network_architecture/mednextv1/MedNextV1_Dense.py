@@ -14,8 +14,7 @@ class DenseBlock(nn.Module):
                  norm_type,
                  dim,
                  grn,
-                 num_layers,
-                 d_rate):
+                 num_layers):
         
         super(DenseBlock, self).__init__()
 
@@ -23,7 +22,7 @@ class DenseBlock(nn.Module):
 
         for i in range(num_layers):
             self.dense_layers.add_module(f"Dense_layer_{i}",
-                                         MedNeXtBlock(in_channels + d_rate * i,
+                                         MedNeXtBlock(in_channels,
                                                       out_channels,
                                                       exp_r,
                                                       kernel_size,
@@ -34,8 +33,13 @@ class DenseBlock(nn.Module):
                                         )
 
     def forward(self, x):
+        inputs = [x]
+
         for layer in self.dense_layers:
-            x = layer(x)
+            input = torch.stack(inputs, dim = 1) 
+            input = torch.sum(input, dim = 1)
+            x = layer(input)
+            inputs.append(x)
 
         return x
 
@@ -87,8 +91,7 @@ class MedNeXt_Dense(nn.Module):
         if type(exp_r) == int:
             exp_r = [exp_r for i in range(len(block_counts))]
         
-        self.enc_block_0 = nn.Sequential(*[
-            MedNeXtBlock(
+        self.enc_block_0 = DenseBlock(
                 in_channels=n_channels,
                 out_channels=n_channels,
                 exp_r=exp_r[0],
@@ -96,10 +99,9 @@ class MedNeXt_Dense(nn.Module):
                 do_res=do_res,
                 norm_type=norm_type,
                 dim=dim,
-                grn=grn
-                ) 
-            for i in range(block_counts[0])]
-        ) 
+                grn=grn,
+                num_layers = block_counts[0]
+        )
 
         self.down_0 = MedNeXtDownBlock(
             in_channels=n_channels,
@@ -113,18 +115,16 @@ class MedNeXt_Dense(nn.Module):
 
         #self.enc_dense_res_0 = conv(n_channels, 2*n_channels, kernel_size = 1, stride = 2)
     
-        self.enc_block_1 = nn.Sequential(*[
-            MedNeXtBlock(
-                in_channels=n_channels*2,
-                out_channels=n_channels*2,
+        self.enc_block_1 = DenseBlock(
+                in_channels=n_channels * 2,
+                out_channels=n_channels * 2,
                 exp_r=exp_r[1],
                 kernel_size=enc_kernel_size,
                 do_res=do_res,
                 norm_type=norm_type,
                 dim=dim,
-                grn=grn
-                )
-            for i in range(block_counts[1])]
+                grn=grn,
+                num_layers = block_counts[1]
         )
 
         self.down_1 = MedNeXtDownBlock(
@@ -140,18 +140,16 @@ class MedNeXt_Dense(nn.Module):
 
         #self.enc_dense_res_1 = conv(2*n_channels, 4*n_channels, kernel_size = 1, stride = 2)
 
-        self.enc_block_2 = nn.Sequential(*[
-            MedNeXtBlock(
-                in_channels=n_channels*4,
-                out_channels=n_channels*4,
+        self.enc_block_2 = DenseBlock(
+                in_channels=n_channels * 4,
+                out_channels=n_channels * 4,
                 exp_r=exp_r[2],
                 kernel_size=enc_kernel_size,
                 do_res=do_res,
                 norm_type=norm_type,
                 dim=dim,
-                grn=grn
-                )
-            for i in range(block_counts[2])]
+                grn=grn,
+                num_layers = block_counts[2]
         )
 
         self.down_2 = MedNeXtDownBlock(
@@ -167,18 +165,16 @@ class MedNeXt_Dense(nn.Module):
 
         #self.enc_dense_res_2 = conv(4*n_channels, 8*n_channels, kernel_size = 1, stride = 2)
         
-        self.enc_block_3 = nn.Sequential(*[
-            MedNeXtBlock(
-                in_channels=n_channels*8,
-                out_channels=n_channels*8,
+        self.enc_block_3 = DenseBlock(
+                in_channels=n_channels * 8,
+                out_channels=n_channels * 8,
                 exp_r=exp_r[3],
                 kernel_size=enc_kernel_size,
                 do_res=do_res,
                 norm_type=norm_type,
                 dim=dim,
-                grn=grn
-                )            
-            for i in range(block_counts[3])]
+                grn=grn,
+                num_layers = block_counts[3]
         )
         
         self.down_3 = MedNeXtDownBlock(
@@ -194,18 +190,16 @@ class MedNeXt_Dense(nn.Module):
 
         #self.enc_dense_res_3 = conv(8*n_channels, 16*n_channels, kernel_size = 1, stride = 2)
 
-        self.bottleneck = nn.Sequential(*[
-            MedNeXtBlock(
-                in_channels=n_channels*16,
-                out_channels=n_channels*16,
+        self.bottleneck = DenseBlock(
+                in_channels=n_channels * 16,
+                out_channels=n_channels * 16,
                 exp_r=exp_r[4],
-                kernel_size=dec_kernel_size,
+                kernel_size=enc_kernel_size,
                 do_res=do_res,
                 norm_type=norm_type,
                 dim=dim,
-                grn=grn
-                )
-            for i in range(block_counts[4])]
+                grn=grn,
+                num_layers = block_counts[4]
         )
 
         self.up_3 = MedNeXtUpBlock(

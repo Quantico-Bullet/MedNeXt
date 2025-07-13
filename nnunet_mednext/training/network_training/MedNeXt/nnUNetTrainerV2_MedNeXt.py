@@ -2,6 +2,7 @@ import torch
 import os
 import torch.nn as nn
 from nnunet_mednext.network_architecture.mednextv1.MedNextV1 import MedNeXt as MedNeXt_Orig
+from nnunet_mednext.network_architecture.mednextv1.MedNextV1_Dense import MedNeXt_Dense
 from nnunet_mednext.training.network_training.nnUNetTrainerV2 import nnUNetTrainerV2
 from nnunet_mednext.network_architecture.neural_network import SegmentationNetwork
 from nnunet_mednext.utilities.nd_softmax import softmax_helper
@@ -44,7 +45,7 @@ class nnUNetTrainerV2_Optim_and_LR(nnUNetTrainerV2):
 class nnUNetTrainerV2_MedNeXt_S_kernel3(nnUNetTrainerV2_Optim_and_LR):   
     
     def initialize_network(self):
-        self.network = MedNeXt(
+        self.network = MedNeXt_Dense(
             in_channels = self.num_input_channels, 
             n_channels = 32,
             n_classes = self.num_classes, 
