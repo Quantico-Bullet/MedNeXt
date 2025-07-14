@@ -336,8 +336,8 @@ class MedNeXt_Dense(nn.Module):
                 x = checkpoint.checkpoint(l, x, self.dummy_tensor)
 
         elif isinstance(block, DenseBlock):
-            x = checkpoint.checkpoint(l, x, self.dummy_tensor)
-            
+            x = checkpoint.checkpoint(block, x, self.dummy_tensor)
+
         else:
             x = block(x)
             
