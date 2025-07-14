@@ -39,7 +39,7 @@ class DenseBlock(nn.Module):
         for layer in self.dense_layers:
             input = torch.stack(inputs, dim = 1) 
             input = torch.sum(input, dim = 1)
-            x = checkpoint.checkpoint(layer, input, self.dummy_tensor)
+            x = checkpoint.checkpoint(layer, input)
             inputs.append(x)
 
         return x
@@ -337,7 +337,7 @@ class MedNeXt_Dense(nn.Module):
                 x = checkpoint.checkpoint(l, x, self.dummy_tensor)
 
         elif isinstance(block, DenseBlock):
-            x = checkpoint.checkpoint(block, x, self.dummy_tensor)
+            x = checkpoint.checkpoint(block, x)
 
         else:
             x = block(x)
