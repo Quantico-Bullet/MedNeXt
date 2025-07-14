@@ -19,6 +19,7 @@ class DenseBlock(nn.Module):
         super(DenseBlock, self).__init__()
 
         self.dense_layers = nn.ModuleList()
+        self.dummy_tensor = nn.Parameter(torch.tensor([1.]), requires_grad=True) 
 
         for i in range(num_layers):
             self.dense_layers.add_module(f"Dense_layer_{i}",
@@ -38,7 +39,7 @@ class DenseBlock(nn.Module):
         for layer in self.dense_layers:
             input = torch.stack(inputs, dim = 1) 
             input = torch.sum(input, dim = 1)
-            x = layer(input)
+            x = checkpoint.checkpoint(layer, input, self.dummy_tensor)
             inputs.append(x)
 
         return x
