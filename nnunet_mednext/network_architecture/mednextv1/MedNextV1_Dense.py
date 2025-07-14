@@ -38,7 +38,7 @@ class DenseBlock(nn.Module):
         for layer in self.dense_layers:
             input = torch.stack(inputs, dim = 1) 
             input = torch.sum(input, dim = 1)
-            x = checkpoint.checkpoint(layer, input)
+            x = checkpoint.checkpoint(layer, input, dummy_tensor)
             inputs.append(x)
 
         return x
