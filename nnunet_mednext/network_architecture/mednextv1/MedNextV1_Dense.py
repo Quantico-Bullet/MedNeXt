@@ -19,7 +19,6 @@ class DenseBlock(nn.Module):
         super(DenseBlock, self).__init__()
 
         self.dense_layers = nn.ModuleList()
-        self.dummy_tensor = nn.Parameter(torch.tensor([1.]), requires_grad=True) 
 
         for i in range(num_layers):
             self.dense_layers.add_module(f"Dense_layer_{i}",
@@ -33,7 +32,7 @@ class DenseBlock(nn.Module):
                                                       grn = grn)
                                         )
 
-    def forward(self, x):
+    def forward(self, x, dummy_tensor = None):
         inputs = [x]
 
         for layer in self.dense_layers:
@@ -337,7 +336,7 @@ class MedNeXt_Dense(nn.Module):
                 x = checkpoint.checkpoint(l, x, self.dummy_tensor)
 
         elif isinstance(block, DenseBlock):
-            x = checkpoint.checkpoint(block, x)
+            x = checkpoint.checkpoint(block, x, self.dummy_tensor)
 
         else:
             x = block(x)
