@@ -324,15 +324,23 @@ class MedNeXt_Dense(nn.Module):
         self.block_counts = block_counts
 
 
-    def iterative_checkpoint(self, sequential_block, x):
+    def iterative_checkpoint(self, block, x):
         """
         This simply forwards x through each block of the sequential_block while
         using gradient_checkpointing. This implementation is designed to bypass
         the following issue in PyTorch's gradient checkpointing:
         https://discuss.pytorch.org/t/checkpoint-with-no-grad-requiring-inputs-problem/19117/9
         """
-        for l in sequential_block:
+        if isinstance(block, nn.Sequential):
+            for l in block:
+                x = checkpoint.checkpoint(l, x, self.dummy_tensor)
+
+        elif isinstance(block, DenseBlock):
             x = checkpoint.checkpoint(l, x, self.dummy_tensor)
+            
+        else:
+            x = block(x)
+            
         return x
 
 
