@@ -25,7 +25,16 @@ from nnunet_mednext.postprocessing.connected_components import apply_postprocess
 
 def merge_files(files, properties_files, out_file, override, store_npz):
     if override or not isfile(out_file):
-        softmax = [np.load(f)['softmax'][None] for f in files]
+        softmax = []
+
+        for f in files:
+            file = np.load(f)
+
+            if 'softmax' in file:
+                softmax.append(file['softmax'][None])
+            else: 
+                softmax.append(file['probabilities'][None])
+
         softmax = np.vstack(softmax)
         softmax = np.mean(softmax, 0)
         props = [load_pickle(f) for f in properties_files]
