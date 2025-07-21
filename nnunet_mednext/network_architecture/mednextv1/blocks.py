@@ -15,7 +15,7 @@ class MedNeXtBlock(nn.Module):
                 n_groups: int | None = None,
                 dim = '3d',
                 grn = False,
-                do_dropout = False
+                do_dropout = True
                 ):
 
         super().__init__()
@@ -31,7 +31,7 @@ class MedNeXtBlock(nn.Module):
         elif self.dim == '3d':
             conv = nn.Conv3d
 
-        self.dropout = nn.FeatureAlphaDropout(p = 0.1)
+        self.dropout = nn.Dropout(p = 0.1)
             
         # First convolution layer with DepthWise Convolutions
         self.conv1 = conv(

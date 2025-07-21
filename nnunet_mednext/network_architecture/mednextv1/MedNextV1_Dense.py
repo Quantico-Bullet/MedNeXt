@@ -39,6 +39,7 @@ class DenseBlock(nn.Module):
             input = torch.stack(inputs, dim = 1) 
             input = torch.sum(input, dim = 1)
             input = F.relu(input)
+            input = F.normalize(input)
 
             x = checkpoint.checkpoint(layer, input, dummy_tensor)
             inputs.append(x)
@@ -106,7 +107,7 @@ class MedNeXt_Dense(nn.Module):
                 norm_type=norm_type,
                 dim=dim,
                 grn=grn,
-                num_layers = block_counts[0]
+                num_layers = 6 #block_counts[0]
         )
 
         self.down_0 = MedNeXtDownBlock(
@@ -130,7 +131,7 @@ class MedNeXt_Dense(nn.Module):
                 norm_type=norm_type,
                 dim=dim,
                 grn=grn,
-                num_layers = block_counts[1]
+                num_layers = 6 #block_counts[1]
         )
 
         self.down_1 = MedNeXtDownBlock(
@@ -155,7 +156,7 @@ class MedNeXt_Dense(nn.Module):
                 norm_type=norm_type,
                 dim=dim,
                 grn=grn,
-                num_layers = block_counts[2]
+                num_layers = 6 #block_counts[2]
         )
 
         self.down_2 = MedNeXtDownBlock(
@@ -180,7 +181,7 @@ class MedNeXt_Dense(nn.Module):
                 norm_type=norm_type,
                 dim=dim,
                 grn=grn,
-                num_layers = block_counts[3]
+                num_layers = 6 #block_counts[3]
         )
         
         self.down_3 = MedNeXtDownBlock(
@@ -205,7 +206,7 @@ class MedNeXt_Dense(nn.Module):
                 norm_type=norm_type,
                 dim=dim,
                 grn=grn,
-                num_layers = block_counts[4]
+                num_layers = 6 #block_counts[4]
         )
 
         self.up_3 = MedNeXtUpBlock(
