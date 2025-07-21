@@ -55,7 +55,7 @@ class nnUNetTrainerV2_Optim_and_LR(nnUNetTrainerV2):
 class nnUNetTrainerV2_MedNeXt_S_kernel3(nnUNetTrainerV2_Optim_and_LR):   
     
     def initialize_network(self):
-        self.network = MedNeXtDense(
+        self.network = MedNeXt(
             in_channels = self.num_input_channels, 
             n_channels = 32,
             n_classes = self.num_classes, 
