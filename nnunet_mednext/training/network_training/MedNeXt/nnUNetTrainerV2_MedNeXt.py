@@ -34,7 +34,7 @@ class nnUNetTrainerV2_Optim_and_LR(nnUNetTrainerV2):
 
     def __init__(self, *args, **kwargs): 
         super().__init__(*args, **kwargs)
-        self.initial_lr = 1e-3
+        self.initial_lr = 2e-3
 
     def process_plans(self, plans):
         super().process_plans(plans)
@@ -65,7 +65,7 @@ class nnUNetTrainerV2_MedNeXt_S_kernel3(nnUNetTrainerV2_Optim_and_LR):
             do_res=True,                      # Can be used to individually test residual connection
             do_res_up_down = True,
             block_counts = [2,2,2,2,2,2,2,2,2],
-            #checkpoint_style = 'outside_block'
+            checkpoint_style = 'outside_block'
         )
 
         if torch.cuda.is_available():
