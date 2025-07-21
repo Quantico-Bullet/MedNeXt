@@ -107,7 +107,7 @@ class MedNeXt_Dense(nn.Module):
                 norm_type=norm_type,
                 dim=dim,
                 grn=grn,
-                num_layers = 6 #block_counts[0]
+                num_layers = block_counts[0]
         )
 
         self.down_0 = MedNeXtDownBlock(
@@ -131,7 +131,7 @@ class MedNeXt_Dense(nn.Module):
                 norm_type=norm_type,
                 dim=dim,
                 grn=grn,
-                num_layers = 6 #block_counts[1]
+                num_layers = block_counts[1]
         )
 
         self.down_1 = MedNeXtDownBlock(
@@ -156,7 +156,7 @@ class MedNeXt_Dense(nn.Module):
                 norm_type=norm_type,
                 dim=dim,
                 grn=grn,
-                num_layers = 6 #block_counts[2]
+                num_layers = block_counts[2]
         )
 
         self.down_2 = MedNeXtDownBlock(
@@ -181,7 +181,7 @@ class MedNeXt_Dense(nn.Module):
                 norm_type=norm_type,
                 dim=dim,
                 grn=grn,
-                num_layers = 6 #block_counts[3]
+                num_layers = block_counts[3]
         )
         
         self.down_3 = MedNeXtDownBlock(
