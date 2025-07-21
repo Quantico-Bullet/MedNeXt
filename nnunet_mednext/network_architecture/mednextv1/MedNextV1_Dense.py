@@ -206,7 +206,7 @@ class MedNeXt_Dense(nn.Module):
                 norm_type=norm_type,
                 dim=dim,
                 grn=grn,
-                num_layers = 6 #block_counts[4]
+                num_layers = block_counts[4]
         )
 
         self.up_3 = MedNeXtUpBlock(
