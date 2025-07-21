@@ -118,7 +118,9 @@ class nnUNetTrainer(NetworkTrainer):
         self.batch_dice = batch_dice
         #self.loss = BoundaryDoU_CE_Loss(4)
         #self.loss = BoundaryDoU_Dice_Loss(4, {'batch_dice': self.batch_dice, 'smooth': 1e-5, 'do_bg': False})
-        self.loss = DC_and_CE_loss({'batch_dice': self.batch_dice, 'smooth': 1e-5, 'do_bg': False}, {})
+        ce_class_weights = torch.tensor([1.0, 0.7, 0.7])
+        self.loss = DC_and_CE_loss({'batch_dice': self.batch_dice, 'smooth': 1e-5, 'do_bg': False}, 
+                                   {"weight": ce_class_weights})
         #self.loss = DoU_Dice_CE_Loss(4, {'batch_dice': self.batch_dice, 'smooth': 1e-5, 'do_bg': False})
 
         self.online_eval_foreground_dc = []
@@ -150,11 +152,10 @@ class nnUNetTrainer(NetworkTrainer):
         self.best_epoch = -1
         self.best_metrics = {}
 
-
         wandb.login(key="51ffe1022d9cb8e7e7a504cbf9a800d732b5de57")
         run = wandb.init(
-            project="MedNeXt_SK3_Dense",
-            name = f"MedNeXt_SSA(relu_norm_drop)_0_50",
+            project="MedNeXt_SK3_Normal",
+            name = f"MedNeXt_SSA_0_50_(ce[1.0, 0.7, 0.7])",
             config={                     
                 "learning_rate": self.initial_lr
             },

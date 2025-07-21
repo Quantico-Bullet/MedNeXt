@@ -55,7 +55,7 @@ class nnUNetTrainerV2_Optim_and_LR(nnUNetTrainerV2):
 class nnUNetTrainerV2_MedNeXt_S_kernel3(nnUNetTrainerV2_Optim_and_LR):   
     
     def initialize_network(self):
-        self.network = MedNeXtDense(
+        self.network = MedNeXt(
             in_channels = self.num_input_channels, 
             n_channels = 32,
             n_classes = self.num_classes, 
@@ -65,7 +65,7 @@ class nnUNetTrainerV2_MedNeXt_S_kernel3(nnUNetTrainerV2_Optim_and_LR):
             do_res=True,                      # Can be used to individually test residual connection
             do_res_up_down = True,
             block_counts = [2,2,2,2,2,2,2,2,2],
-            checkpoint_style = 'outside_block'
+            #checkpoint_style = 'outside_block'
         )
 
         if torch.cuda.is_available():
@@ -75,7 +75,7 @@ class nnUNetTrainerV2_MedNeXt_S_kernel3(nnUNetTrainerV2_Optim_and_LR):
 class nnUNetTrainerV2_MedNeXt_B_kernel3(nnUNetTrainerV2_Optim_and_LR):   
         
     def initialize_network(self):
-        self.network = MedNeXtDense(
+        self.network = MedNeXt(
             in_channels = self.num_input_channels, 
             n_channels = 32,
             n_classes = self.num_classes, 
