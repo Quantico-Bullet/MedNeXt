@@ -84,16 +84,22 @@ class BoundaryDoU_Dice_Loss(nn.Module):
         return dice_loss + b_dou_loss
     
 class DoU_Dice_CE_Loss(nn.Module):
-    def __init__(self, n_classes, soft_dice_kwargs):
+    def __init__(self, n_classes, ce_kwargs, soft_dice_kwargs, loss_weights = [0.1, 1.0, 1.0]):
         super(DoU_Dice_CE_Loss, self).__init__()
 
         self.loss_0 = BoundaryDoULoss(n_classes)
         self.loss_1 = SoftDiceLoss(**soft_dice_kwargs)
-        self.loss_2 = RobustCrossEntropyLoss()
+        self.loss_2 = RobustCrossEntropyLoss(**ce_kwargs)
+        self.lw = loss_weights
     
     def forward(self, net_output, target):
         loss_0 = self.loss_0(net_output, target)
         loss_1 = self.loss_1(net_output, target)
         loss_2 = self.loss_2(net_output, target[:, 0].long())
+        
+        if isinstance(self.lw, int):
+            return self.lw * (loss_0 + loss_1 + loss_2)
 
-        return 0.2 * loss_0 + loss_1 + loss_2
+        else:
+            lw_0, lw_1, lw_2 = self.lw
+            return lw_0 * loss_0 + lw_1 * loss_1 + lw_2 * loss_2
