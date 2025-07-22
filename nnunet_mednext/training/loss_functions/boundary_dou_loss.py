@@ -84,7 +84,7 @@ class BoundaryDoU_Dice_Loss(nn.Module):
         return dice_loss + b_dou_loss
     
 class DoU_Dice_CE_Loss(nn.Module):
-    def __init__(self, n_classes, ce_kwargs, soft_dice_kwargs, loss_weights = [0.1, 1.0, 1.0]):
+    def __init__(self, n_classes, ce_kwargs, soft_dice_kwargs, loss_weights = [0.2, 1.0, 1.0]):
         super(DoU_Dice_CE_Loss, self).__init__()
 
         self.loss_0 = BoundaryDoULoss(n_classes)
