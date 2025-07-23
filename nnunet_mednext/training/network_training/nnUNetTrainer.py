@@ -119,10 +119,10 @@ class nnUNetTrainer(NetworkTrainer):
         #self.loss = BoundaryDoU_CE_Loss(4)
         #self.loss = BoundaryDoU_Dice_Loss(4, {'batch_dice': self.batch_dice, 'smooth': 1e-5, 'do_bg': False})
         ce_class_weights = torch.tensor([1.0, 1.0, 0.7, 0.7]).cuda()
-        #self.loss = DC_and_CE_loss({'batch_dice': self.batch_dice, 'smooth': 1e-5, 'do_bg': False}, 
-        #                           {"weight": ce_class_weights})
-        self.loss = DoU_Dice_CE_Loss(4, {"weight": ce_class_weights}, 
-                                     {'batch_dice': self.batch_dice, 'smooth': 1e-5, 'do_bg': False})
+        self.loss = DC_and_CE_loss({'batch_dice': self.batch_dice, 'smooth': 1e-5, 'do_bg': False}, 
+                                   {"weight": ce_class_weights})
+        #self.loss = DoU_Dice_CE_Loss(4, {"weight": ce_class_weights}, 
+        #                             {'batch_dice': self.batch_dice, 'smooth': 1e-5, 'do_bg': False})
 
         self.online_eval_foreground_dc = []
         self.online_eval_tp = []
@@ -156,7 +156,7 @@ class nnUNetTrainer(NetworkTrainer):
         wandb.login(key="51ffe1022d9cb8e7e7a504cbf9a800d732b5de57")
         run = wandb.init(
             project="MedNeXt_SK3_Normal",
-            name = f"MedNeXt_SSA_25_49_(ce=[1.0, 1.0, 0.7, 0.7])_bdou",
+            name = f"MedNeXt_SSA_25_49_(ce=[1.0, 1.0, 0.7, 0.7])_dropout",
             config={                     
                 "learning_rate": self.initial_lr
             },
