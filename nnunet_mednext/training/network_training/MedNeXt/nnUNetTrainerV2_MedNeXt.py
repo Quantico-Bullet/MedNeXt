@@ -147,7 +147,8 @@ class nnUNetTrainerV2_MedNeXt_S_kernel5(nnUNetTrainerV2_Optim_and_LR):
             deep_supervision=True,             # Can be used to test deep supervision
             do_res=True,                       # Can be used to individually test residual connection
             do_res_up_down = True,
-            block_counts = [2,2,2,2,2,2,2,2,2]
+            block_counts = [2,2,2,2,2,2,2,2,2],
+            checkpoint_style = 'outside_block'
         )
 
         if torch.cuda.is_available():
