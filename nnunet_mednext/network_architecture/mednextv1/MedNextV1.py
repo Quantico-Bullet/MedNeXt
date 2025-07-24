@@ -57,7 +57,7 @@ class MedNeXt(nn.Module):
                 in_channels=n_channels,
                 out_channels=n_channels,
                 exp_r=exp_r[0],
-                kernel_size=enc_kernel_size,
+                kernel_size= 5 ,# enc_kernel_size // Modified to improve the receptive field of the first encoder layer
                 do_res=do_res,
                 norm_type=norm_type,
                 dim=dim,
@@ -272,7 +272,7 @@ class MedNeXt(nn.Module):
                 in_channels=n_channels,
                 out_channels=n_channels,
                 exp_r=exp_r[8],
-                kernel_size=dec_kernel_size,
+                kernel_size= 5,#dec_kernel_size,
                 do_res=do_res,
                 norm_type=norm_type,
                 dim=dim,
