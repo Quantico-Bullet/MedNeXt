@@ -75,7 +75,7 @@ class nnUNetTrainerV2_MedNeXt_S_kernel3(nnUNetTrainerV2_Optim_and_LR):
 class nnUNetTrainerV2_MedNeXt_B_kernel3(nnUNetTrainerV2_Optim_and_LR):   
         
     def initialize_network(self):
-        self.network = MedNeXt(
+        self.network = MedNeXtDense(
             in_channels = self.num_input_channels, 
             n_channels = 32,
             n_classes = self.num_classes, 
@@ -95,11 +95,11 @@ class nnUNetTrainerV2_MedNeXt_B_kernel3(nnUNetTrainerV2_Optim_and_LR):
 class nnUNetTrainerV2_MedNeXt_M_kernel3(nnUNetTrainerV2_Optim_and_LR):   
         
     def initialize_network(self):
-        self.network = MedNeXt(
+        self.network = MedNeXtDense(
             in_channels = self.num_input_channels, 
             n_channels = 32,
             n_classes = self.num_classes, 
-            exp_r=[2,3,4,4,4,4,4,3,2],         # Expansion ratio as in Swin Transformers
+            exp_r= [2,3,4,4,4,4,4,3,2],         # Expansion ratio as in Swin Transformers
             kernel_size=3,                     # Can test kernel_size
             deep_supervision=True,             # Can be used to test deep supervision
             do_res=True,                      # Can be used to individually test residual connection
