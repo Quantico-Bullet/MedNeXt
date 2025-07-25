@@ -31,7 +31,7 @@ class MedNeXtBlock(nn.Module):
         elif self.dim == '3d':
             conv = nn.Conv3d
 
-        self.dropout = nn.Dropout(p = 0.1)
+        self.dropout = nn.Dropout(p = 0.05)
             
         # First convolution layer with DepthWise Convolutions
         self.conv1 = conv(
