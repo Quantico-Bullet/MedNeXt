@@ -102,7 +102,7 @@ class MedNeXt_Dense(nn.Module):
                 in_channels=n_channels,
                 out_channels=n_channels,
                 exp_r=exp_r[0],
-                kernel_size=enc_kernel_size,
+                kernel_size = 5,
                 do_res=do_res,
                 norm_type=norm_type,
                 dim=dim,
