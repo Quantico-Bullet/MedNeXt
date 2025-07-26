@@ -118,9 +118,9 @@ class nnUNetTrainer(NetworkTrainer):
         self.batch_dice = batch_dice
         #self.loss = BoundaryDoU_CE_Loss(4)
         #self.loss = BoundaryDoU_Dice_Loss(4, {'batch_dice': self.batch_dice, 'smooth': 1e-5, 'do_bg': False})
-        ce_class_weights = torch.tensor([1.0, 1.0, 0.7, 0.7]).cuda()
+        #ce_class_weights = torch.tensor([1.0, 1.0, 0.7, 0.7]).cuda()
         self.loss = DC_and_CE_loss({'batch_dice': self.batch_dice, 'smooth': 1e-5, 'do_bg': False}, 
-                                   {"weight": ce_class_weights})
+                                   {})
 
         self.online_eval_foreground_dc = []
         self.online_eval_tp = []
