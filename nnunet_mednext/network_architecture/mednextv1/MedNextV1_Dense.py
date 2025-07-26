@@ -31,7 +31,11 @@ class DenseBlock(nn.Module):
                                                       dim = dim,
                                                       grn = grn)
                                         )
-                
+
+        channels = in_channels + len(self.dense_layers) * out_channels
+        self.batch_norm = nn.GroupNorm(channels, 
+                                       channels)
+        self.act = nn.ReLU()   
 
     def forward(self, x, dummy_tensor = None):
         inputs = [x]
@@ -41,7 +45,11 @@ class DenseBlock(nn.Module):
             x = checkpoint.checkpoint(layer, input, dummy_tensor)
             inputs.append(x)
 
-        return x, torch.cat(inputs, dim = 1)
+        dense_out = torch.cat(inputs, dim = 1)
+        dense_out = self.batch_norm(dense_out)
+        dense_out = self.act(dense_out)
+
+        return x, dense_out
 
 class MedNeXt_Dense(nn.Module):
 
