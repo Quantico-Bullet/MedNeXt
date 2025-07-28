@@ -15,7 +15,7 @@ class MedNeXtBlock(nn.Module):
                 n_groups: int | None = None,
                 dim = '3d',
                 grn = False,
-                do_dropout = False
+                do_dropout = True
                 ):
 
         super().__init__()
