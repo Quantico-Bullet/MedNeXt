@@ -20,8 +20,9 @@ import numpy as np
 import torch
 from nnunet_mednext.training.data_augmentation.data_augmentation_insaneDA import get_insaneDA_augmentation
 from nnunet_mednext.training.data_augmentation.data_augmentation_moreDA import get_moreDA_augmentation
+from nnunet_mednext.training.data_augmentation.data_augmentation_noDA import get_no_augmentation
 from nnunet_mednext.training.loss_functions.deep_supervision import MultipleOutputLoss2
-from nnunet_mednext.utilities.to_torch import maybe_to_torch, to_cuda
+from nnunet_mednext.utilities.to_torch import maybe_to_torch, to_cudamoreDA_augmentation
 from nnunet_mednext.network_architecture.generic_UNet import Generic_UNet
 from nnunet_mednext.network_architecture.generic_modular_residual_UNet import ResidualUNet, get_default_network_config
 from nnunet_mednext.network_architecture.initialization import InitWeights_He
@@ -47,7 +48,7 @@ class nnUNetTrainerV2(nnUNetTrainer):
                  unpack_data=True, deterministic=True, fp16=False, sample_by_frequency=False):
         super().__init__(plans_file, fold, output_folder, dataset_directory, batch_dice, stage, unpack_data,
                          deterministic, fp16, sample_by_frequency)
-        self.max_num_epochs = 50
+        self.max_num_epochs = 25
         self.initial_lr = 1e-2
         self.deep_supervision_scales = None
         self.ds_loss_weights = None
@@ -104,10 +105,10 @@ class nnUNetTrainerV2(nnUNetTrainer):
                         "INFO: Not unpacking data! Training may be slow due to that. Pray you are not using 2d or you "
                         "will wait all winter for your model to finish!")
 
-                self.tr_gen, self.val_gen = get_insaneDA_augmentation(
+                self.tr_gen, self.val_gen = get_no_augmentation(
                     self.dl_tr, self.dl_val,
-                    self.data_aug_params[
-                        'patch_size_for_spatialtransform'],
+                    #elf.data_aug_params[
+                    #    'patch_size_for_spatialtransform'],
                     self.data_aug_params,
                     deep_supervision_scales=self.deep_supervision_scales,
                     pin_memory=self.pin_memory
