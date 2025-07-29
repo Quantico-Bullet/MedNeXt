@@ -22,7 +22,7 @@ from nnunet_mednext.training.data_augmentation.data_augmentation_insaneDA import
 from nnunet_mednext.training.data_augmentation.data_augmentation_moreDA import get_moreDA_augmentation
 from nnunet_mednext.training.data_augmentation.data_augmentation_noDA import get_no_augmentation
 from nnunet_mednext.training.loss_functions.deep_supervision import MultipleOutputLoss2
-from nnunet_mednext.utilities.to_torch import maybe_to_torch
+from nnunet_mednext.utilities.to_torch import maybe_to_torch, to_cuda
 from nnunet_mednext.network_architecture.generic_UNet import Generic_UNet
 from nnunet_mednext.network_architecture.generic_modular_residual_UNet import ResidualUNet, get_default_network_config
 from nnunet_mednext.network_architecture.initialization import InitWeights_He
