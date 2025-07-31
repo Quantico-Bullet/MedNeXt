@@ -57,7 +57,7 @@ class nnUNetTrainerV2_MedNeXt_S_kernel3(nnUNetTrainerV2_Optim_and_LR):
     def initialize_network(self):
         self.network = MedNeXtDense(
             in_channels = self.num_input_channels, 
-            n_channels = 16,
+            n_channels = 8,
             n_classes = self.num_classes, 
             exp_r=2                 ,         # Expansion ratio as in Swin Transformers
             kernel_size=3,                     # Can test kernel_size
