@@ -19,6 +19,7 @@ class DenseBlock(nn.Module):
         super(DenseBlock, self).__init__()
 
         self.dense_layers = nn.ModuleList()
+        self.conv_pad = lambda x: torch.nn.functional.pad(x, (1,0,1,0,1,0))
 
         for i in range(num_layers):
             self.dense_layers.add_module(f"Dense_layer_{i}",
@@ -37,11 +38,15 @@ class DenseBlock(nn.Module):
                                        channels)
         self.act = nn.ReLU()   
 
-    def forward(self, x, dummy_tensor = None):
+    def forward(self, x, dummy_tensor = None, up_channels = None):
         inputs = [x]
 
         for layer in self.dense_layers:
-            input = torch.cat(inputs, dim = 1) 
+            input = torch.cat(inputs, dim = 1)
+
+            #if up_channels:
+            #    input = self.conv_pad(up_channels[:,layer]) + input
+
             x = checkpoint.checkpoint(layer, input, dummy_tensor)
             inputs.append(x)
 
@@ -58,7 +63,7 @@ class MedNeXt_Dense(nn.Module):
         n_channels: int,
         n_classes: int, 
         exp_r: int = 4,                            # Expansion ratio as in Swin Transformers
-        kernel_size: int = 7,                      # Ofcourse can test kernel_size
+        kernel_size: int = 7,                      # Of course can test kernel_size
         enc_kernel_size: int = None,
         dec_kernel_size: int = None,
         deep_supervision: bool = False,             # Can be used to test deep supervision
@@ -212,7 +217,7 @@ class MedNeXt_Dense(nn.Module):
         )
 
         self.up_3 = MedNeXtUpBlock(
-            in_channels=16*n_channels,
+            in_channels=16*n_channels + block_counts[4] * 16*n_channels,
             out_channels=8*n_channels,
             exp_r=exp_r[5],
             kernel_size=dec_kernel_size,
@@ -224,22 +229,20 @@ class MedNeXt_Dense(nn.Module):
 
         #self.dec_dense_res_0 = conv_trans(16*n_channels, 8*n_channels, kernel_size = 1, stride = 2)
 
-        self.dec_block_3 = nn.Sequential(*[
-            MedNeXtBlock(
-                in_channels=n_channels*8,
-                out_channels=n_channels*8,
+        self.dec_block_3 = DenseBlock(
+                in_channels=n_channels * 8,
+                out_channels=n_channels * 8,
                 exp_r=exp_r[5],
-                kernel_size=dec_kernel_size,
+                kernel_size=enc_kernel_size,
                 do_res=do_res,
                 norm_type=norm_type,
                 dim=dim,
-                grn=grn
-                )
-            for i in range(block_counts[5])]
+                grn=grn,
+                num_layers = block_counts[5]
         )
 
         self.up_2 = MedNeXtUpBlock(
-            in_channels=8*n_channels,
+            in_channels=8*n_channels + block_counts[5] * 8*n_channels,
             out_channels=4*n_channels,
             exp_r=exp_r[6],
             kernel_size=dec_kernel_size,
@@ -251,22 +254,20 @@ class MedNeXt_Dense(nn.Module):
 
         #self.dec_dense_res_1 = conv_trans(8*n_channels, 4*n_channels, kernel_size = 1, stride = 2)
 
-        self.dec_block_2 = nn.Sequential(*[
-            MedNeXtBlock(
-                in_channels=n_channels*4,
-                out_channels=n_channels*4,
+        self.dec_block_2 = DenseBlock(
+                in_channels=n_channels * 4,
+                out_channels=n_channels * 4,
                 exp_r=exp_r[6],
-                kernel_size=dec_kernel_size,
+                kernel_size=enc_kernel_size,
                 do_res=do_res,
                 norm_type=norm_type,
                 dim=dim,
-                grn=grn
-                )
-            for i in range(block_counts[6])]
+                grn=grn,
+                num_layers = block_counts[6]
         )
 
         self.up_1 = MedNeXtUpBlock(
-            in_channels=4*n_channels,
+            in_channels=4*n_channels + block_counts[6] * 4*n_channels,
             out_channels=2*n_channels,
             exp_r=exp_r[7],
             kernel_size=dec_kernel_size,
@@ -278,22 +279,20 @@ class MedNeXt_Dense(nn.Module):
 
         #self.dec_dense_res_2 = conv_trans(4*n_channels, 2*n_channels, kernel_size = 1, stride = 2)
 
-        self.dec_block_1 = nn.Sequential(*[
-            MedNeXtBlock(
-                in_channels=n_channels*2,
-                out_channels=n_channels*2,
+        self.dec_block_1 = DenseBlock(
+                in_channels=n_channels * 2,
+                out_channels=n_channels * 2,
                 exp_r=exp_r[7],
-                kernel_size=dec_kernel_size,
+                kernel_size=enc_kernel_size,
                 do_res=do_res,
                 norm_type=norm_type,
                 dim=dim,
-                grn=grn
-                )
-            for i in range(block_counts[7])]
+                grn=grn,
+                num_layers = block_counts[7]
         )
 
         self.up_0 = MedNeXtUpBlock(
-            in_channels=2*n_channels,
+            in_channels=2*n_channels + block_counts[7] * 2*n_channels,
             out_channels=n_channels,
             exp_r=exp_r[8],
             kernel_size=dec_kernel_size,
@@ -305,30 +304,33 @@ class MedNeXt_Dense(nn.Module):
 
         #self.dec_dense_res_3 = conv_trans(2*n_channels, n_channels, kernel_size = 1, stride = 2)
 
-        self.dec_block_0 = nn.Sequential(*[
-            MedNeXtBlock(
+        self.dec_block_0 = DenseBlock(
                 in_channels=n_channels,
                 out_channels=n_channels,
                 exp_r=exp_r[8],
-                kernel_size=dec_kernel_size,
+                kernel_size=enc_kernel_size,
                 do_res=do_res,
                 norm_type=norm_type,
                 dim=dim,
-                grn=grn
-                )
-            for i in range(block_counts[8])]
+                grn=grn,
+                num_layers = block_counts[8]
         )
 
-        self.out_0 = OutBlock(in_channels=n_channels, n_classes=n_classes, dim=dim)
+        self.out_0 = OutBlock(in_channels=n_channels + block_counts[8] * n_channels, 
+                              n_classes=n_classes, dim=dim)
 
         # Used to fix PyTorch checkpointing bug
         self.dummy_tensor = nn.Parameter(torch.tensor([1.]), requires_grad=True)  
 
         if deep_supervision:
-            self.out_1 = OutBlock(in_channels=n_channels*2, n_classes=n_classes, dim=dim)
-            self.out_2 = OutBlock(in_channels=n_channels*4, n_classes=n_classes, dim=dim)
-            self.out_3 = OutBlock(in_channels=n_channels*8, n_classes=n_classes, dim=dim)
-            self.out_4 = OutBlock(in_channels=n_channels*16, n_classes=n_classes, dim=dim)
+            self.out_1 = OutBlock(in_channels=2*n_channels + block_counts[7] * 2*n_channels, 
+                                  n_classes=n_classes, dim=dim)
+            self.out_2 = OutBlock(in_channels=4*n_channels + block_counts[6] * 4*n_channels, 
+                                  n_classes=n_classes, dim=dim)
+            self.out_3 = OutBlock(in_channels=8*n_channels + block_counts[5] * 8*n_channels, 
+                                  n_classes=n_classes, dim=dim)
+            self.out_4 = OutBlock(in_channels=16*n_channels + block_counts[4] * 16*n_channels, 
+                                  n_classes=n_classes, dim=dim)
 
         self.block_counts = block_counts
 
@@ -358,94 +360,95 @@ class MedNeXt_Dense(nn.Module):
         x = self.stem(x)
 
         if self.outside_block_checkpointing:
-            x_res_0 = self.iterative_checkpoint(self.enc_block_0, x)
-            x = checkpoint.checkpoint(self.down_0, x_res_0[1], self.dummy_tensor)
-            #x = x + self.enc_dense_0(x_res_0[1])
-            x_res_1 = self.iterative_checkpoint(self.enc_block_1, x)
-            x = checkpoint.checkpoint(self.down_1, x_res_1[1], self.dummy_tensor)
-            #x = x + self.enc_dense_1(x_res_1[1])
-            x_res_2 = self.iterative_checkpoint(self.enc_block_2, x)
-            x = checkpoint.checkpoint(self.down_2, x_res_2[1], self.dummy_tensor)
-            #x = x + self.enc_dense_2(x_res_2[1])
-            x_res_3 = self.iterative_checkpoint(self.enc_block_3, x)
-            x = checkpoint.checkpoint(self.down_3, x_res_3[1], self.dummy_tensor)
-            #x = x + self.enc_dense_3(x_res_3[1])
-            x = self.iterative_checkpoint(self.bottleneck, x)
+            x_d_down_0 = self.iterative_checkpoint(self.enc_block_0, x)
+            enc_x = checkpoint.checkpoint(self.down_0, x_d_down_0[1], self.dummy_tensor)
+            #enc_x = enc_x + self.enc_dense_0(x_d_down_0)
+            x_d_down_1 = self.iterative_checkpoint(self.enc_block_1, enc_x)
+            enc_x = checkpoint.checkpoint(self.down_1, x_d_down_1[1], self.dummy_tensor)
+            #enc_x = enc_x + self.enc_dense_1(x_d_down_1)
+            x_d_down_2 = self.iterative_checkpoint(self.enc_block_2, enc_x)
+            enc_x = checkpoint.checkpoint(self.down_2, x_d_down_2[1], self.dummy_tensor)
+            #enc_x = enc_x + self.enc_dense_2(x_d_down_2)
+            x_d_down_3 = self.iterative_checkpoint(self.enc_block_3, enc_x)
+            enc_x = checkpoint.checkpoint(self.down_3, x_d_down_3[1], self.dummy_tensor)
+            #enc_x = enc_x + self.enc_dense_3(x_d_down_3)
+            x_d_up_4 = self.iterative_checkpoint(self.bottleneck, enc_x)
             if self.do_ds:
-                x_ds_4 = checkpoint.checkpoint(self.out_4, x[0], self.dummy_tensor)
+                x_ds_4 = checkpoint.checkpoint(self.out_4, x_d_up_4[1], self.dummy_tensor)
 
-            x_up_3 = checkpoint.checkpoint(self.up_3, x[0], self.dummy_tensor)
-            dec_x = x_res_3[0] + x_up_3 
-            x = self.iterative_checkpoint(self.dec_block_3, dec_x)
+            x_up_3 = checkpoint.checkpoint(self.up_3, x_d_up_4[1], self.dummy_tensor)
+            dec_x = x_d_down_3[0] + x_up_3 
+            x_d_up_3 = self.iterative_checkpoint(self.dec_block_3, dec_x)
             if self.do_ds:
-                x_ds_3 = checkpoint.checkpoint(self.out_3, x, self.dummy_tensor)
-            del x_res_3, x_up_3
+                x_ds_3 = checkpoint.checkpoint(self.out_3, x_d_up_3[1], self.dummy_tensor)
+            del x_d_down_3, x_up_3, x_d_up_4
 
-            x_up_2 = checkpoint.checkpoint(self.up_2, x, self.dummy_tensor)
-            dec_x = x_res_2[0] + x_up_2
-            x = self.iterative_checkpoint(self.dec_block_2, dec_x)
+            x_up_2 = checkpoint.checkpoint(self.up_2, x_d_up_3[1], self.dummy_tensor)
+            dec_x = x_d_down_2[0] + x_up_2
+            x_d_up_2 = self.iterative_checkpoint(self.dec_block_2, dec_x)
             if self.do_ds:
-                x_ds_2 = checkpoint.checkpoint(self.out_2, x, self.dummy_tensor)
-            del x_res_2, x_up_2
+                x_ds_2 = checkpoint.checkpoint(self.out_2, x_d_up_2[1], self.dummy_tensor)
+            del x_d_down_2, x_up_2, x_d_up_3
 
-            x_up_1 = checkpoint.checkpoint(self.up_1, x, self.dummy_tensor)
-            dec_x = x_res_1[0] + x_up_1
-            x = self.iterative_checkpoint(self.dec_block_1, dec_x)
+            x_up_1 = checkpoint.checkpoint(self.up_1, x_d_up_2[1], self.dummy_tensor)
+            dec_x = x_d_down_1[0] + x_up_1
+            x_d_up_1 = self.iterative_checkpoint(self.dec_block_1, dec_x)
             if self.do_ds:
-                x_ds_1 = checkpoint.checkpoint(self.out_1, x, self.dummy_tensor)
-            del x_res_1, x_up_1
+                x_ds_1 = checkpoint.checkpoint(self.out_1, x_d_up_1[1], self.dummy_tensor)
+            del x_d_down_1, x_up_1, x_d_up_2
 
-            x_up_0 = checkpoint.checkpoint(self.up_0, x, self.dummy_tensor)
-            dec_x = x_res_0[0] + x_up_0
-            x = self.iterative_checkpoint(self.dec_block_0, dec_x)
-            del x_res_0, x_up_0, dec_x
+            x_up_0 = checkpoint.checkpoint(self.up_0,  x_d_up_1[1], self.dummy_tensor)
+            dec_x = x_d_down_0[0] + x_up_0
+            x_d_up_0  = self.iterative_checkpoint(self.dec_block_0, dec_x)
+            del x_d_down_0, x_up_0, dec_x, x_d_up_1
 
-            x = checkpoint.checkpoint(self.out_0, x, self.dummy_tensor)
+            x = checkpoint.checkpoint(self.out_0, x_d_up_0[1], self.dummy_tensor)
+            del x_d_up_0
 
         else:
-            x_res_0 = self.enc_block_0(x)
-            x = self.down_0(x_res_0[1])
-            #x = x + self.enc_dense_0(x_res_0[1])
-            x_res_1 = self.enc_block_1(x)
-            x = self.down_1(x_res_1[1])
-            #x = x + self.enc_dense_1(x_res_1[1])
-            x_res_2 = self.enc_block_2(x)
-            x = self.down_2(x_res_2[1])
-            #x = x + self.enc_dense_2(x_res_2[1])
-            x_res_3 = self.enc_block_3(x)
-            x = self.down_3(x_res_3[1])
-            #x = x + self.enc_dense_3(x_res_3[1])
+            x_d_down_0 = self.enc_block_0(x)
+            x = self.down_0(x_d_down_0)
+            #x = x + self.enc_dense_0(x_d_down_0)
+            x_d_down_1 = self.enc_block_1(x)
+            x = self.down_1(x_d_down_1)
+            #x = x + self.enc_dense_1(x_d_down_1)
+            x_d_down_2 = self.enc_block_2(x)
+            x = self.down_2(x_d_down_2)
+            #x = x + self.enc_dense_2(x_d_down_2)
+            x_d_down_3 = self.enc_block_3(x)
+            x = self.down_3(x_d_down_3)
+            #x = x + self.enc_dense_3(x_d_down_3)
 
             x = self.bottleneck(x)
             if self.do_ds:
-                x_ds_4 = self.out_4(x[0])
+                x_ds_4 = self.out_4(x)
 
-            x_up_3 = self.up_3(x[0])
-            dec_x = x_res_3[0] + x_up_3
+            x_up_3 = self.up_3(x)
+            dec_x = x_d_down_3 + x_up_3
             x = self.dec_block_3(dec_x)
 
             if self.do_ds:
                 x_ds_3 = self.out_3(x)
-            del x_res_3, x_up_3
+            del x_d_down_3, x_up_3
 
             x_up_2 = self.up_2(x)
-            dec_x = x_res_2[0] + x_up_2 
+            dec_x = x_d_down_2 + x_up_2 
             x = self.dec_block_2(dec_x)
             if self.do_ds:
                 x_ds_2 = self.out_2(x)
-            del x_res_2, x_up_2
+            del x_d_down_2, x_up_2
 
             x_up_1 = self.up_1(x)
-            dec_x = x_res_1[0] + x_up_1
+            dec_x = x_d_down_1 + x_up_1
             x = self.dec_block_1(dec_x)
             if self.do_ds:
                 x_ds_1 = self.out_1(x)
-            del x_res_1, x_up_1
+            del x_d_down_1, x_up_1
 
             x_up_0 = self.up_0(x)
-            dec_x = x_res_0[0] + x_up_0
+            dec_x = x_d_down_0 + x_up_0
             x = self.dec_block_0(dec_x)
-            del x_res_0, x_up_0, dec_x
+            del x_d_down_0, x_up_0, dec_x
 
             x = self.out_0(x)
 
