@@ -57,14 +57,14 @@ class nnUNetTrainerV2_MedNeXt_S_kernel3(nnUNetTrainerV2_Optim_and_LR):
     def initialize_network(self):
         self.network = MedNeXtDense(
             in_channels = self.num_input_channels, 
-            n_channels = 32,
+            n_channels = 16,
             n_classes = self.num_classes, 
             exp_r=2                 ,         # Expansion ratio as in Swin Transformers
             kernel_size=3,                     # Can test kernel_size
             deep_supervision=True,             # Can be used to test deep supervision
             do_res=True,                      # Can be used to individually test residual connection
             do_res_up_down = True,
-            block_counts = [1,1,1,1,1,1,1,1,1],
+            block_counts = [2,2,2,2,2,2,2,2,2],
             checkpoint_style = 'outside_block'
         )
 
