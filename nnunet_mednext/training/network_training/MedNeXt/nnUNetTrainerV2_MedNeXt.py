@@ -19,7 +19,7 @@ class MedNeXt(MedNeXt_Orig, SegmentationNetwork):
         self.inference_apply_nonlin = softmax_helper
         self.input_shape_must_be_divisible_by = 2**5
         self.num_classes = kwargs['n_classes']
-        # self.do_ds = False        Already added this in the main class
+        self.do_ds = False        #Already added this in the main class
 
 class MedNeXtDense(MedNeXt_Dense, SegmentationNetwork):
     
@@ -75,7 +75,7 @@ class nnUNetTrainerV2_EMedNeXt_S_kernel3(nnUNetTrainerV2_Optim_and_LR):
             #exp_r=3                 ,         # Expansion ratio as in Swin Transformers
             kernel_sizes=[1,3,5], 
             strides=[1,1,1],                    # Can test kernel_size
-            deep_supervision=True,            # Can be used to test deep supervision
+            deep_supervision=False,            # Can be used to test deep supervision
             do_res=True,                      # Can be used to individually test residual connection
             do_res_up_down = True,
             block_counts = [3,4,4,4,4,4,4,4,3],
