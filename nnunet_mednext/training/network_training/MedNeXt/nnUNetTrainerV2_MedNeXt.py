@@ -77,7 +77,7 @@ class nnUNetTrainerV2_EMedNeXt_S_kernel3(nnUNetTrainerV2_Optim_and_LR):
             do_res=True,                      # Can be used to individually test residual connection
             do_res_up_down = True,
             block_counts = [3,4,4,4,4,4,4,4,3],
-            checkpoint_style = 'outside_block'
+            checkpoint_style = None#'outside_block'
         )
 
         if torch.cuda.is_available():
