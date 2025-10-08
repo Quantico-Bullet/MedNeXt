@@ -15,7 +15,7 @@ class EfficientMedNeXt(nn.Module):
         enc_kernel_sizes: int = [1,3,5],
         dec_kernel_sizes: int = [1,3,5],
         uniform_dec_channels = None,
-        deep_supervision: bool = True,      #False       # Can be used to test deep supervision
+        deep_supervision: bool = False,      #False       # Can be used to test deep supervision
         do_res: bool = False,                       # Can be used to individually test residual connection
         do_res_up_down: bool = False,             # Additional 'res' connection on up and down convs
         checkpoint_style: bool = None,            # Either inside block or outside block
