@@ -41,7 +41,7 @@ class EMedNeXt(EfficientMedNeXt, SegmentationNetwork):
         self.inference_apply_nonlin = softmax_helper
         self.input_shape_must_be_divisible_by = 2**5
         self.num_classes = kwargs['n_classes']
-        self.do_ds = False        #Already added this in the main class
+        self.do_ds = True        #Already added this in the main class
 
 class nnUNetTrainerV2_Optim_and_LR(nnUNetTrainerV2):
 
@@ -52,7 +52,7 @@ class nnUNetTrainerV2_Optim_and_LR(nnUNetTrainerV2):
     def process_plans(self, plans):
         super().process_plans(plans)
         # Please don't do this for nnunet. This is only for MedNeXt for all the DS to be used
-        num_of_outputs_in_mednext = 1
+        num_of_outputs_in_mednext = 5
         self.net_num_pool_op_kernel_sizes = [[2,2,2] for i in range(num_of_outputs_in_mednext+1)]    
     
     def initialize_optimizer_and_scheduler(self):
@@ -75,7 +75,7 @@ class nnUNetTrainerV2_EMedNeXt_S_kernel3(nnUNetTrainerV2_Optim_and_LR):
             #exp_r=3                 ,         # Expansion ratio as in Swin Transformers
             kernel_sizes=[1,3,5], 
             strides=[1,1,1],                    # Can test kernel_size
-            deep_supervision=False,            # Can be used to test deep supervision
+            deep_supervision=True,            # Can be used to test deep supervision
             do_res=True,                      # Can be used to individually test residual connection
             do_res_up_down = True,
             block_counts = [3,4,4,4,4,4,4,4,3],
