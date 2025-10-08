@@ -460,7 +460,7 @@ class EfficientMedNeXt(nn.Module):
             x = self.out_0(x)
             #newly added end
             
-        if self.do_ds:
+        if True:
             return [x, x_ds_1, x_ds_2, x_ds_3, x_ds_4]
         else: 
             #print('returning final')
