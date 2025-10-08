@@ -70,12 +70,13 @@ class nnUNetTrainerV2_EMedNeXt_S_kernel3(nnUNetTrainerV2_Optim_and_LR):
             in_channels = self.num_input_channels, 
             n_channels = 8,
             n_classes = self.num_classes, 
-            exp_r=3                 ,         # Expansion ratio as in Swin Transformers
-            kernel_size=3,                    # Can test kernel_size
+            #exp_r=3                 ,         # Expansion ratio as in Swin Transformers
+            kernel_sizes=[1,3,5], 
+            strides=[1,1,1],                    # Can test kernel_size
             deep_supervision=True,            # Can be used to test deep supervision
             do_res=True,                      # Can be used to individually test residual connection
             do_res_up_down = True,
-            block_counts = [4,4,1,1,1,1,1,4,4],
+            block_counts = [3,4,4,4,4,4,4,4,3],
             checkpoint_style = 'outside_block'
         )
 
