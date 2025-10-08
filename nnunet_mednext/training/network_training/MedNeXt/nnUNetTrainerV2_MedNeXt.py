@@ -70,7 +70,7 @@ class nnUNetTrainerV2_EMedNeXt_S_kernel3(nnUNetTrainerV2_Optim_and_LR):
         
         self.network = EMedNeXt(
             in_channels = self.num_input_channels, 
-            n_channels = 32,
+            n_channels = 16,
             n_classes = self.num_classes, 
             #exp_r=3                 ,         # Expansion ratio as in Swin Transformers
             kernel_sizes=[1,3,5], 
