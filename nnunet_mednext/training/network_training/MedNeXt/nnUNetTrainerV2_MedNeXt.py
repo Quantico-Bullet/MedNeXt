@@ -3,6 +3,7 @@ import os
 import torch.nn as nn
 from nnunet_mednext.network_architecture.mednextv1.MedNextV1 import MedNeXt as MedNeXt_Orig
 from nnunet_mednext.network_architecture.mednextv1.MedNextV1_Dense import MedNeXt_Dense
+from nnunet_mednext.network_architecture.mednextv1.EfficientMedNext import EfficientMedNeXt
 from nnunet_mednext.training.network_training.nnUNetTrainerV2 import nnUNetTrainerV2
 from nnunet_mednext.network_architecture.neural_network import SegmentationNetwork
 from nnunet_mednext.utilities.nd_softmax import softmax_helper
@@ -20,6 +21,17 @@ class MedNeXt(MedNeXt_Orig, SegmentationNetwork):
         # self.do_ds = False        Already added this in the main class
 
 class MedNeXtDense(MedNeXt_Dense, SegmentationNetwork):
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Segmentation Network Params. Needed for the nnUNet evaluation pipeline
+        self.conv_op = nn.Conv3d
+        self.inference_apply_nonlin = softmax_helper
+        self.input_shape_must_be_divisible_by = 2**5
+        self.num_classes = kwargs['n_classes']
+        # self.do_ds = False        Already added this in the main class
+
+class EMedNeXt(EfficientMedNeXt, SegmentationNetwork):
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -51,6 +63,24 @@ class nnUNetTrainerV2_Optim_and_LR(nnUNetTrainerV2):
                                         )
         self.lr_scheduler = None
 
+class nnUNetTrainerV2_EMedNeXt_S_kernel3(nnUNetTrainerV2_Optim_and_LR):   
+    
+    def initialize_network(self):
+        self.network = EMedNeXt(
+            in_channels = self.num_input_channels, 
+            n_channels = 8,
+            n_classes = self.num_classes, 
+            exp_r=3                 ,         # Expansion ratio as in Swin Transformers
+            kernel_size=3,                    # Can test kernel_size
+            deep_supervision=True,            # Can be used to test deep supervision
+            do_res=True,                      # Can be used to individually test residual connection
+            do_res_up_down = True,
+            block_counts = [4,4,1,1,1,1,1,4,4],
+            checkpoint_style = 'outside_block'
+        )
+
+        if torch.cuda.is_available():
+            self.network.cuda()
 
 class nnUNetTrainerV2_MedNeXt_S_kernel3(nnUNetTrainerV2_Optim_and_LR):   
     

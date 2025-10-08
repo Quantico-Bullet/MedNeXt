@@ -2,79 +2,98 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+class MultiDilationDepthwiseConv3D(nn.Module):
+    def __init__(self, in_channels, conv, kernel_sizes=[1,3,5], strides=[1,1,1], dw_parallel=True):
+        super(MultiDilationDepthwiseConv3D, self).__init__()
+        self.in_channels = in_channels
+        self.dw_parallel = dw_parallel
+        self.dilations = [(kernel - 1) // 2 if kernel > 1 else 1 for kernel in kernel_sizes]
+        modified_kernel_sizes = [3 if kernel > 1 else 1 for kernel in kernel_sizes]
+        #print(kernel_sizes, strides)
 
-class MedNeXtBlock(nn.Module):
+        self.dwconvs = nn.ModuleList([
+            nn.Sequential(
+                conv(self.in_channels, self.in_channels, modified_kernel_sizes[i], strides[i], kernel_sizes[i] // 2, dilation=self.dilations[i], groups=self.in_channels, bias=False),
+            )
+            for i in range(len(modified_kernel_sizes))
+        ])
+
+    def forward(self, x):
+        # Apply the convolution layers in a loop
+        outputs = []
+        for dwconv in self.dwconvs:
+            dw_out = dwconv(x)
+            outputs.append(dw_out)
+            if self.dw_parallel == False:
+                x = x+dw_out
+        # concatenate the features
+        out = torch.cat(outputs, dim=1)
+        return out
+
+class EfficientMedNeXtBlock(nn.Module):
 
     def __init__(self, 
                 in_channels:int, 
                 out_channels:int, 
                 exp_r:int=4, 
-                kernel_size:int=7, 
+                kernel_sizes=(1,3,5), 
+                strides=(1,1,1),
                 do_res:int=True,
                 norm_type:str = 'group',
-                n_groups: int | None = None,
                 dim = '3d',
-                grn = False,
-                do_dropout = True
+                conv=None,
+                grn = False
                 ):
 
         super().__init__()
 
         self.do_res = do_res
-        self.do_dropout = do_dropout
         self.in_channels = in_channels
-
+        self.out_channels = out_channels
+        exp_r = len(kernel_sizes)
         assert dim in ['2d', '3d']
         self.dim = dim
-        if self.dim == '2d':
-            conv = nn.Conv2d
-        elif self.dim == '3d':
-            conv = nn.Conv3d
-
-        self.dropout = nn.Dropout(p = 0.05)
+        if conv == None:
+            if self.dim == '2d':
+                conv = nn.Conv2d
+            elif self.dim == '3d':
+                conv = nn.Conv3d
             
         # First convolution layer with DepthWise Convolutions
-        self.conv1 = conv(
-            in_channels = in_channels,
-            out_channels = in_channels,
-            kernel_size = kernel_size,
-            stride = 1,
-            padding = kernel_size//2,
-            groups = in_channels if n_groups is None else n_groups,
-        )
+        self.conv1 = MultiDilationDepthwiseConv3D(in_channels, conv, kernel_sizes=kernel_sizes, strides=strides, dw_parallel=True)
 
         # Normalization Layer. GroupNorm is used by default.
         if norm_type=='group':
             self.norm = nn.GroupNorm(
                 num_groups=in_channels, 
-                num_channels=in_channels
+                num_channels=exp_r*in_channels
                 )
         elif norm_type=='layer':
             self.norm = LayerNorm(
                 normalized_shape=in_channels, 
                 data_format='channels_first'
                 )
-
-        # Second convolution (Expansion) layer with Conv3D 1x1x1
-        self.conv2 = conv(
-            in_channels = in_channels,
-            out_channels = exp_r*in_channels,
-            kernel_size = 3,
-            stride = 1,
-            padding = 0
-        )
         
-        # GELU activation
+        # GeLU activations
         self.act = nn.GELU()
         
         # Third convolution (Compression) layer with Conv3D 1x1x1
         self.conv3 = conv(
             in_channels = exp_r*in_channels,
             out_channels = out_channels,
-            kernel_size = 3,
+            kernel_size = 1,
             stride = 1,
             padding = 0
         )
+        
+        if self.do_res and (self.in_channels != self.out_channels):
+            self.res_conv = conv(
+                in_channels = in_channels,
+                out_channels = out_channels,
+                kernel_size = 1,
+                stride = 1,
+                padding = 0
+            )
 
         self.grn = grn
         if grn:
@@ -85,17 +104,11 @@ class MedNeXtBlock(nn.Module):
                 self.grn_beta = nn.Parameter(torch.zeros(1,exp_r*in_channels,1,1), requires_grad=True)
                 self.grn_gamma = nn.Parameter(torch.zeros(1,exp_r*in_channels,1,1), requires_grad=True)
 
- 
     def forward(self, x, dummy_tensor=None):
         
         x1 = x
         x1 = self.conv1(x1)
-        x1 = self.norm(x1)
-
-        if self.do_dropout:
-            x1 = self.dropout(x1)
-
-        x1 = self.act(self.conv2(x1))
+        x1 = self.act(self.norm(x1))
         if self.grn:
             # gamma, beta: learnable affine transform parameters
             # X: input of shape (N,C,H,W,D)
@@ -105,28 +118,26 @@ class MedNeXtBlock(nn.Module):
                 gx = torch.norm(x1, p=2, dim=(-2, -1), keepdim=True)
             nx = gx / (gx.mean(dim=1, keepdim=True)+1e-6)
             x1 = self.grn_gamma * (x1 * nx) + self.grn_beta + x1
-
         x1 = self.conv3(x1)
-
         if self.do_res:
-            x1 = x + x1
-
+            if self.in_channels != self.out_channels:
+                x = self.res_conv(x)
+            x1 = x + x1  
         return x1
-    
 
-class MedNeXtDownBlock(MedNeXtBlock):
+class EfficientMedNeXtDownBlock(EfficientMedNeXtBlock):
 
-    def __init__(self, in_channels, out_channels, exp_r=4, kernel_size=7, 
+    def __init__(self, in_channels, out_channels, exp_r:int=4, kernel_sizes=[1,3,5], strides=[2,1,1],
                 do_res=False, norm_type = 'group', dim='3d', grn=False):
-
-        super().__init__(in_channels, out_channels, exp_r, kernel_size, 
-                        do_res = False, norm_type = norm_type, dim=dim,
-                        grn=grn)
 
         if dim == '2d':
             conv = nn.Conv2d
         elif dim == '3d':
             conv = nn.Conv3d
+        
+        super().__init__(in_channels, out_channels, exp_r, kernel_sizes, strides=strides, 
+                        do_res = False, norm_type = norm_type, dim=dim,
+                        grn=grn)
         self.resample_do_res = do_res
         if do_res:
             self.res_conv = conv(
@@ -135,15 +146,6 @@ class MedNeXtDownBlock(MedNeXtBlock):
                 kernel_size = 1,
                 stride = 2
             )
-
-        self.conv1 = conv(
-            in_channels = in_channels,
-            out_channels = in_channels,
-            kernel_size = kernel_size,
-            stride = 2,
-            padding = kernel_size//2,
-            groups = in_channels,
-        )
 
     def forward(self, x, dummy_tensor=None):
         
@@ -156,13 +158,10 @@ class MedNeXtDownBlock(MedNeXtBlock):
         return x1
 
 
-class MedNeXtUpBlock(MedNeXtBlock):
+class EfficientMedNeXtUpBlock(EfficientMedNeXtBlock):
 
-    def __init__(self, in_channels, out_channels, exp_r=4, kernel_size=7, 
+    def __init__(self, in_channels, out_channels, exp_r:int=4, kernel_sizes=[1,3,5], strides=[2,1,1],
                 do_res=False, norm_type = 'group', dim='3d', grn = False):
-        super().__init__(in_channels, out_channels, exp_r, kernel_size,
-                         do_res=False, norm_type = norm_type, dim=dim,
-                         grn=grn)
 
         self.resample_do_res = do_res
         
@@ -171,6 +170,10 @@ class MedNeXtUpBlock(MedNeXtBlock):
             conv = nn.ConvTranspose2d
         elif dim == '3d':
             conv = nn.ConvTranspose3d
+        
+        super().__init__(in_channels, out_channels, exp_r, kernel_sizes=kernel_sizes, strides=strides,
+                    do_res=False, norm_type = norm_type, dim=dim, conv=conv,
+                    grn=grn) 
         if do_res:            
             self.res_conv = conv(
                 in_channels = in_channels,
@@ -179,21 +182,10 @@ class MedNeXtUpBlock(MedNeXtBlock):
                 stride = 2
                 )
 
-        self.conv1 = conv(
-            in_channels = in_channels,
-            out_channels = in_channels,
-            kernel_size = kernel_size,
-            stride = 2,
-            padding = kernel_size//2,
-            groups = in_channels,
-        )
-
-
     def forward(self, x, dummy_tensor=None):
         
         x1 = super().forward(x)
         # Asymmetry but necessary to match shape
-        
         if self.dim == '2d':
             x1 = torch.nn.functional.pad(x1, (1,0,1,0))
         elif self.dim == '3d':
@@ -212,14 +204,14 @@ class MedNeXtUpBlock(MedNeXtBlock):
 
 class OutBlock(nn.Module):
 
-    def __init__(self, in_channels, n_classes, dim):
+    def __init__(self, in_channels, n_classes, dim, stride=1):
         super().__init__()
         
         if dim == '2d':
             conv = nn.ConvTranspose2d
         elif dim == '3d':
             conv = nn.ConvTranspose3d
-        self.conv_out = conv(in_channels, n_classes, kernel_size=1)
+        self.conv_out = conv(in_channels, n_classes, kernel_size=1, stride = stride)
     
     def forward(self, x, dummy_tensor=None): 
         return self.conv_out(x)
@@ -250,26 +242,10 @@ class LayerNorm(nn.Module):
             x = (x - u) / torch.sqrt(s + self.eps)
             x = self.weight[:, None, None, None] * x + self.bias[:, None, None, None]
             return x
-
          
 if __name__ == "__main__":
 
-
-    # network = nnUNeXtBlock(in_channels=12, out_channels=12, do_res=False).cuda()
-
-    # with torch.no_grad():
-    #     print(network)
-    #     x = torch.zeros((2, 12, 8, 8, 8)).cuda()
-    #     print(network(x).shape)
-
-    # network = DownsampleBlock(in_channels=12, out_channels=24, do_res=False)
-
-    # with torch.no_grad():
-    #     print(network)
-    #     x = torch.zeros((2, 12, 128, 128, 128))
-    #     print(network(x).shape)
-
-    network = MedNeXtBlock(in_channels=12, out_channels=12, do_res=True, grn=True, norm_type='group').cuda()
+    network = EfficientMedNeXtBlock(in_channels=12, out_channels=12, do_res=True, grn=True, norm_type='group').cuda()
     # network = LayerNorm(normalized_shape=12, data_format='channels_last').cuda()
     # network.eval()
     with torch.no_grad():
