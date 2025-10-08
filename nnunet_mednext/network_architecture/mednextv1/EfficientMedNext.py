@@ -29,7 +29,7 @@ class EfficientMedNeXt(nn.Module):
 
         super().__init__()
 
-        self.do_ds = deep_supervision
+        self.do_ds = False #deep_supervision
         assert checkpoint_style in [None, 'outside_block']
         self.inside_block_checkpointing = False
         self.outside_block_checkpointing = False
