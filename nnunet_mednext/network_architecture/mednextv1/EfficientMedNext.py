@@ -351,7 +351,7 @@ class EfficientMedNeXt(nn.Module):
         return x
 
 
-    def forward(self, x, mode='test'):
+    def forward(self, x, mode='train'):
         
         x = self.stem(x)
         self.do_ds = False
@@ -461,7 +461,7 @@ class EfficientMedNeXt(nn.Module):
             x = self.out_0(x)
             #newly added end
             
-        if False:
+        if self.do_ds:
             return [x, x_ds_1, x_ds_2, x_ds_3, x_ds_4]
         else: 
             #print('returning final')

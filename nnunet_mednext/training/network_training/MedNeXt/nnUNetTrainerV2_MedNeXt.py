@@ -41,7 +41,7 @@ class EMedNeXt(EfficientMedNeXt, SegmentationNetwork):
         self.inference_apply_nonlin = softmax_helper
         self.input_shape_must_be_divisible_by = 2**5
         self.num_classes = kwargs['n_classes']
-        self.do_ds = True        #Already added this in the main class
+        #self.do_ds = True        #Already added this in the main class
 
 class nnUNetTrainerV2_Optim_and_LR(nnUNetTrainerV2):
 
