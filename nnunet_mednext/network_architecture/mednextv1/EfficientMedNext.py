@@ -354,7 +354,7 @@ class EfficientMedNeXt(nn.Module):
     def forward(self, x, mode='test'):
         
         x = self.stem(x)
-        if self.outside_block_checkpointing:
+        if True:
             x_res_0 = self.iterative_checkpoint(self.enc_block_0, x)
             x = checkpoint.checkpoint(self.down_0, x_res_0, self.dummy_tensor)
             x_res_1 = self.iterative_checkpoint(self.enc_block_1, x)
