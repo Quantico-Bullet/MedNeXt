@@ -151,7 +151,7 @@ class nnUNetTrainer(NetworkTrainer):
         self.best_epoch = -1
         self.best_metrics = {}
 
-        wandb.login(key="51ffe1022d9cb8e7e7a504cbf9a800d732b5de57")
+        wandb.login(key="b5ec8648a9a53a1d8568abddfbe3c198cdb89dbd")
         run = wandb.init(
             project="EMedNeXt_Small",
             name = f"EMedNeXt_SSA_0_49_All",
