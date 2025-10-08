@@ -354,6 +354,7 @@ class EfficientMedNeXt(nn.Module):
     def forward(self, x, mode='test'):
         
         x = self.stem(x)
+        self.do_ds = False
         if True:
             x_res_0 = self.iterative_checkpoint(self.enc_block_0, x)
             x = checkpoint.checkpoint(self.down_0, x_res_0, self.dummy_tensor)
@@ -460,7 +461,7 @@ class EfficientMedNeXt(nn.Module):
             x = self.out_0(x)
             #newly added end
             
-        if True:
+        if False:
             return [x, x_ds_1, x_ds_2, x_ds_3, x_ds_4]
         else: 
             #print('returning final')
