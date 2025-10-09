@@ -154,7 +154,7 @@ class nnUNetTrainer(NetworkTrainer):
         wandb.login(key="b5ec8648a9a53a1d8568abddfbe3c198cdb89dbd")
         run = wandb.init(
             project="EMedNeXt_Small",
-            name = f"EMedNeXt_SSA_0_49_All",
+            name = f"EMedNeXt_SSA_0_49_All_k=3",
             config={                     
                 "learning_rate": self.initial_lr
             },
