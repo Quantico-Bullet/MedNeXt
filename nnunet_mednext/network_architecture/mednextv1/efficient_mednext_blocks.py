@@ -74,8 +74,8 @@ class EfficientMedNeXtBlock(nn.Module):
                 data_format='channels_first'
                 )
         
-        # GeLU activations
-        self.act = nn.GELU()
+        # SiLU activations
+        self.act = nn.SiLU()
         
         # Third convolution (Compression) layer with Conv3D 1x1x1
         self.conv3 = conv(
