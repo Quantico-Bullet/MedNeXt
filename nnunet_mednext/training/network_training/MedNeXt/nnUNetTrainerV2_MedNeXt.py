@@ -47,7 +47,7 @@ class nnUNetTrainerV2_Optim_and_LR(nnUNetTrainerV2):
 
     def __init__(self, *args, **kwargs): 
         super().__init__(*args, **kwargs)
-        self.initial_lr = 1e-3
+        self.initial_lr = 2e-3
 
     def process_plans(self, plans):
         super().process_plans(plans)
@@ -73,12 +73,12 @@ class nnUNetTrainerV2_EMedNeXt_S_kernel3(nnUNetTrainerV2_Optim_and_LR):
             n_channels = 16,
             n_classes = self.num_classes, 
             #exp_r=3                 ,         # Expansion ratio as in Swin Transformers
-            kernel_sizes=[1,5,1], 
+            kernel_sizes=[1,3,5], 
             strides=[1,1,1],                    # Can test kernel_size
             deep_supervision=True,            # Can be used to test deep supervision
             do_res=True,                      # Can be used to individually test residual connection
             do_res_up_down = True,
-            block_counts = [2,8,2,2,2,2,2,8,2],
+            block_counts = [3,4,4,4,4,4,4,4,3],
             checkpoint_style = 'outside_block'
         )
         
