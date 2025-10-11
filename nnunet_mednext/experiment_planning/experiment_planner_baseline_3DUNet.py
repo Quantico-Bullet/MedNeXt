@@ -326,7 +326,12 @@ class ExperimentPlanner(object):
                     self.plans_per_stage[0]['median_patient_size_in_voxels'], dtype=np.int64):
                 self.plans_per_stage.append(new)
 
-        self.plans_per_stage = self.plans_per_stage[::-1]
+        if isinstance(self.plans_per_stage, list) and len(self.plans_per_stage) > 1:
+            print("[INFO] Skipping creation of low-resolution stage0 plan.")
+            # Keep only the last (highest resolution) stage
+            self.plans_per_stage = [self.plans_per_stage[-1]]    
+
+        #self.plans_per_stage = self.plans_per_stage[::-1]
         self.plans_per_stage = {i: self.plans_per_stage[i] for i in range(len(self.plans_per_stage))}  # convert to dict
 
         print(self.plans_per_stage)
