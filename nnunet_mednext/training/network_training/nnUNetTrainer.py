@@ -795,7 +795,7 @@ class nnUNetTrainer(NetworkTrainer):
 
 
         for i, dice in enumerate(self.last_val_dice_per_class):
-            metrics[f"dice_{self.classes[i+1]}"] = dice
+            metrics[f"dice_{labels[i+1]}"] = dice
 
         wandb.log(metrics)
         self.best_val_dice
