@@ -787,8 +787,15 @@ class nnUNetTrainer(NetworkTrainer):
             "avg_dice": avg_dice
         }
 
+        labels = ['background', 'brain', 'brainstem', 'chiasm', 
+                  'cochlea_l', 'cochlea_r', 'esophagus', 'eye_l', 
+                  'eye_r', 'larynx', 'lens_l', 'lens_r', 'mandible_l', 
+                  'mandible_r', 'opticNerve_l', 'opticNerve_r', 
+                  'parotid_l', 'parotid_r', 'pituitary', 'thyroid']
+
+
         for i, dice in enumerate(self.last_val_dice_per_class):
-            metrics[f"dice_{self.classes[i]}"] = dice
+            metrics[f"dice_{self.classes[i+1]}"] = dice
 
         wandb.log(metrics)
         self.best_val_dice
