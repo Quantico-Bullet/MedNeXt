@@ -787,12 +787,15 @@ class nnUNetTrainer(NetworkTrainer):
             "avg_dice": avg_dice
         }
 
+        """
         labels = ['background', 'brain', 'brainstem', 'chiasm', 
                   'cochlea_l', 'cochlea_r', 'esophagus', 'eye_l', 
                   'eye_r', 'larynx', 'lens_l', 'lens_r', 'mandible_l', 
                   'mandible_r', 'opticNerve_l', 'opticNerve_r', 
                   'parotid_l', 'parotid_r', 'pituitary', 'thyroid']
-
+        """
+        labels = ['chiasm', 'cochlea_l', 'cochlea_r', 'lens_l', 'lens_r',
+                  'opticNerve_l', 'opticNerve_r']
 
         for i, dice in enumerate(self.last_val_dice_per_class):
             metrics[f"dice_{labels[i+1]}"] = dice
