@@ -794,7 +794,7 @@ class nnUNetTrainer(NetworkTrainer):
                   'mandible_r', 'opticNerve_l', 'opticNerve_r', 
                   'parotid_l', 'parotid_r', 'pituitary', 'thyroid']
         """
-        labels = ['chiasm', 'cochlea_l', 'cochlea_r', 'lens_l', 'lens_r',
+        labels = ['background','chiasm', 'cochlea_l', 'cochlea_r', 'lens_l', 'lens_r',
                   'opticNerve_l', 'opticNerve_r']
 
         for i, dice in enumerate(self.last_val_dice_per_class):
